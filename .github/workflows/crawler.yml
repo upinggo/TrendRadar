@@ -35,7 +35,7 @@ on:
     #   "15 * * * *"     → 每小时第15分钟 / minute 15 every hour
     #   "30 0-14 * * *"  → 北京时间 8:00-22:00 每小时第30分钟 / Beijing 8am-10pm
     #
-    - cron: "0 0,12 * * *"   # Beijing 08:00 & 20:00 (UTC 00:00 & 12:00)
+    - cron: "0 0,12 * * *" # Beijing 08:00 & 20:00 (UTC 00:00 & 12:00)
 
   workflow_dispatch:
 
@@ -93,7 +93,6 @@ jobs:
             fi
           fi
 
-
       # --------------------------------------------------------------------------------
       # 🚦 TRAFFIC CONTROL / 流量控制
       # --------------------------------------------------------------------------------
@@ -132,19 +131,6 @@ jobs:
             echo "Error: Config missing"
             exit 1
           fi
-
-      - name: Debug — verify Feishu secret is loaded
-        if: success()
-        env:
-          FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
-        run: |
-          if [ -z "$FEISHU_WEBHOOK_URL" ]; then
-            echo "❌ FEISHU_WEBHOOK_URL is EMPTY — check Repository Secrets (not Environment)"
-          else
-            echo "✅ FEISHU_WEBHOOK_URL length: ${#FEISHU_WEBHOOK_URL}"
-            echo "✅ Starts with: ${FEISHU_WEBHOOK_URL:0:35}..."
-          fi
-
       - name: Run crawler
         if: success()
         env:
@@ -180,16 +166,3 @@ jobs:
           S3_REGION: ${{ secrets.S3_REGION }}
           GITHUB_ACTIONS: true
         run: uv run python -m trendradar
-
-      - name: Commit and push generated report
-        if: success()
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A index.html output/ 2>/dev/null || true
-          if git diff --cached --quiet; then
-            echo "No changes to commit."
-          else
-            git commit -m "chore: update report $(date -u +'%Y-%m-%d %H:%M UTC')"
-            git push
-          fi
