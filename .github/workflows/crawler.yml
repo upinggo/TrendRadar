@@ -133,6 +133,18 @@ jobs:
             exit 1
           fi
 
+      - name: Debug — verify Feishu secret is loaded
+        if: success()
+        env:
+          FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
+        run: |
+          if [ -z "$FEISHU_WEBHOOK_URL" ]; then
+            echo "❌ FEISHU_WEBHOOK_URL is EMPTY — check Repository Secrets (not Environment)"
+          else
+            echo "✅ FEISHU_WEBHOOK_URL length: ${#FEISHU_WEBHOOK_URL}"
+            echo "✅ Starts with: ${FEISHU_WEBHOOK_URL:0:35}..."
+          fi
+
       - name: Run crawler
         if: success()
         env:
