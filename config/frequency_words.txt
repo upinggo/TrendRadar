@@ -148,12 +148,9 @@
 # ───────────────────────────────────────────────────────────────
 
 [WORD_GROUPS]
+/房地产|房产|楼市|楼盘|住宅|商品房|别墅|二手房|新房|期房|现房|学区房|刚需|改善型|公摊|容积率|绿化率|首付|按揭|房贷|限购|限贷|限售|保交楼|城中村|带押过户|认房不认贷|存量盘活|城市更新|房企|开发商|物业|中介|链家|贝壳|万科|万达|碧桂园|融创|绿城|保利|中海|华润|龙湖|金地|王健林|王石|孙宏斌|宋卫平|冯仑|bReals+Estateb|bPropertyb|bHousingb|bMortgageb/ => 房产
 
-# ═══════════════════════════════════════════════════════════════
-#                         企业与品牌
-# ═══════════════════════════════════════════════════════════════
-
-/胖东来|于东来/ => 胖东来
+/财经|股票|基金|证券|A股|港股|美股|牛市|熊市|涨停|跌停|大盘|K线|市盈率|市值|\bStock\b|\bBond\b|\bForex\b|\bETF\b|\bIPO\b/ => 财经
 
 /深度求索|幻方量化|梁文锋|\bDeepSeek\b/ => DeepSeek
 
@@ -168,8 +165,6 @@
 /智元|灵犀|稚晖君|彭志辉|AgiBot/ => 智元机器人
 /众擎|EngineAI|赵同阳/ => 众擎机器人
 
-/黑神话|冯骥/ => 黑神话悟空
-
 /影之刃零|梁其伟/ => 影之刃零
 
 /三体|流浪地球|刘慈欣|郭帆/ => 三体/流浪地球
@@ -182,7 +177,7 @@
 
 /腾讯|鹅厂|马化腾|微信|QQ|天美|阅文集团|微众银行|\bTencent\b|\bPony Ma\b|\bWeChat\b|\bLightSpeed\b|\bWeBank\b/ => 腾讯
 
-/qwen|minimax|glm/ => 国产开源模型
+/开源模型|大模型|LLM|Sora|DALL-E|ChatGPT|Claude|Gemini|通义千问|文心一言|豆包|DeepSeek|bOpenAIb|bAnthropicb|bSams+Altmanb|bGregs+Brockmanb|bDarios+Amodeib|bHuggings+Faceb/ => ai开源模型
 
 /特斯拉|马斯克|\bTesla\b|\bElon Musk\b|\bCybertruck\b|\bModel 3\b|\bModel Y\b|\bModel S\b|\bModel X\b|\bFSD\b/ => 特斯拉
 
@@ -256,3 +251,4 @@
 
 # 产业政策
 生产力
+新质生产力
