@@ -191,7 +191,7 @@ jobs:
             "$REPORTS_DIR"
 
           mkdir -p "$REPORTS_DIR/news-reports"
-          rsync -a --delete output/ "$REPORTS_DIR/news-reports/"
+          rsync -a output/ "$REPORTS_DIR/news-reports/"
 
           cd "$REPORTS_DIR"
           git config user.name "github-actions[bot]"
