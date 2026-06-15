@@ -169,12 +169,47 @@ jobs:
           GITHUB_ACTIONS: true
         run: uv run python -m trendradar
 
+      - name: Push output/ to reports repo
+        if: success()
+        env:
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+        run: |
+          set -e
+          if [ -z "$DEPLOY_TOKEN" ]; then
+            echo "DEPLOY_TOKEN not set, skipping reports repo push."
+            exit 0
+          fi
+          if [ ! -d output ] || [ -z "$(ls -A output 2>/dev/null)" ]; then
+            echo "No output/ content to push."
+            exit 0
+          fi
+
+          REPORTS_DIR="$RUNNER_TEMP/reports-repo"
+          rm -rf "$REPORTS_DIR"
+          git clone --depth=1 --branch main \
+            "https://x-access-token:${DEPLOY_TOKEN}@github.com/upinggo/profile.git" \
+            "$REPORTS_DIR"
+
+          mkdir -p "$REPORTS_DIR/news-reports"
+          rsync -a --delete output/ "$REPORTS_DIR/news-reports/"
+
+          cd "$REPORTS_DIR"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A -- news-reports/
+          if git diff --cached --quiet; then
+            echo "No changes in reports repo."
+          else
+            git commit -m "chore: update report $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git push origin main
+          fi
+
       - name: Commit and push generated report
         if: success()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A index.html output/ 2>/dev/null || true
+          git add -A -- index.html 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
