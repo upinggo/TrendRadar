@@ -1958,12 +1958,12 @@ def render_html_content(
         if len(all_groups) >= 2:
             standalone_html += """
                     <div class="tab-bar standalone-tab-bar">"""
-            for idx, g in enumerate(all_groups):
-                active = ' active' if idx == 0 else ''
-                standalone_html += f"""
-                        <button class="tab-btn{active}" data-standalone-tab="{idx}">{html_escape(g["name"])}<span class="tab-count">{g["count"]}</span></button>"""
             standalone_html += f"""
-                        <button class="tab-btn" data-standalone-tab="all">全部<span class="tab-count">{total_count}</span></button>
+                        <button class="tab-btn active" data-standalone-tab="all">全部<span class="tab-count">{total_count}</span></button>"""
+            for idx, g in enumerate(all_groups):
+                standalone_html += f"""
+                        <button class="tab-btn" data-standalone-tab="{idx}">{html_escape(g["name"])}<span class="tab-count">{g["count"]}</span></button>"""
+            standalone_html += """
                     </div>"""
 
         standalone_html += """
@@ -2352,7 +2352,7 @@ def render_html_content(
                 var hash = window.location.hash;
                 if (hash === '#all') { activateTab('all'); }
                 else if (hash.indexOf('#tab-') === 0) { activateTab(parseInt(hash.replace('#tab-', ''))); }
-                else { activateTab(0, false); }
+                else { activateTab('all', false); }
             }
 
             function initTabVisibility() {
@@ -2369,8 +2369,8 @@ def render_html_content(
                     var activeTab = tabBar.querySelector('.tab-btn.active');
                     if (activeTab) { activeTab.click(); }
                     else {
-                        var firstTab = tabBar.querySelector('.tab-btn[data-tab-index="0"]');
-                        if (firstTab) firstTab.click();
+                        var allTab = tabBar.querySelector('.tab-btn[data-tab-index="all"]');
+                        if (allTab) allTab.click();
                     }
                 }
             }
@@ -2476,7 +2476,7 @@ def render_html_content(
                     tabBar.classList.remove('tab-hidden');
                     var activeBtn = tabBar.querySelector('.tab-btn.active');
                     if (activeBtn) activeBtn.click();
-                    else { var first = tabBar.querySelector('.tab-btn'); if (first) first.click(); }
+                    else { var allBtn = tabBar.querySelector('.tab-btn[data-standalone-tab="all"]'); if (allBtn) allBtn.click(); }
                 }
             }
 

@@ -141,13 +141,25 @@ rss:
       name: "雅虎财经"
       url: "https://finance.yahoo.com/news/rssindex"
 
-    - id: "bing-finance"
+    - id: "Bing-Finance"
       name: "BingFinance"
       url: "https://www.bing.com/news/search?q=黄金价格+走势&format=RSS"
 
-    - id: "BingGlobal"
+    - id: "Bing-Global"
       name: "BingGlobal"
       url: "https://www.bing.com/news/search?q=全球新闻&format=RSS"
+
+    - id: "Bing-House-Shanghai"
+      name: "上海楼市"
+      url: "https://www.bing.com/news/search?q=上海+楼市+房价+二手房&format=RSS"
+
+    - id: "Bing-China-Property"
+      name: "中国房产政策"
+      url: "https://www.bing.com/news/search?q=房地产+政策+限购+房贷+LPR&format=RSS"
+
+    - id: "Bing-Property-Companies"
+      name: "房企动态"
+      url: "https://www.bing.com/news/search?q=万科+保利+融创+碧桂园+龙湖+中海&format=RSS"
 
 
 
@@ -252,7 +264,7 @@ display:
   # 推送展示由 regions.standalone 控制，AI 分析由 ai_analysis.include_standalone 控制
   standalone:
     platforms: ["zhihu","wallstreetcn-hot","baidu","thepaper","cls-hot","bilibili-hot-search","toutiao","ifeng","weibo","https://ai-bot.cn/daily-ai-news/","douyin","tieba"] # 热榜平台 ID 列表（如 ["zhihu", "weibo"]）
-    rss_feeds: ["hacker-news","bing-finance","BingGlobal"] # RSS 源 ID 列表（如 ["hacker-news"]）
+    rss_feeds: ["hacker-news","Bing-Finance","Bing-Global","Bing-House-Shanghai","Bing-China-Property","Bing-Property-Companies"] # RSS 源 ID 列表（如 ["hacker-news"]）
     max_items: 20                                # 每个源最多展示条数（0=不限制）
 
 
