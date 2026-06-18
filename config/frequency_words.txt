@@ -171,6 +171,8 @@
 
 申奥
 
+/世界杯|World\s*Cup|FIFA|国足|梅西|C罗|姆巴佩|哈兰德|内马尔|世预赛|世界杯预选赛|世界杯决赛|世界杯小组赛|世界杯出线|国际足联|球王|金球奖|\bMessi\b|\bRonaldo\b|\bMbappe\b|\bHaaland\b|\bNeymar\b/ => 世界杯
+
 /京东|刘强东|\bJD\b|\bJingdong\b/ => 京东
 
 /字节|张一鸣|梁汝波|抖音|\bByteDance\b|\bTikTok\b|\bDouyin\b|\bLark\b|\bCapCut\b/ => 字节跳动
