@@ -7,7 +7,9 @@ AI 分析结果格式化模块
 
 import html as html_lib
 import re
+from typing import Any, Dict
 from .analyzer import AIAnalysisResult
+from .economic_analyzer import EconomicAnalysisResult, ASSET_WHITELIST, PROFILES
 
 
 def _escape_html(text: str) -> str:
@@ -367,3 +369,393 @@ def render_ai_analysis_html_rich(result: AIAnalysisResult) -> str:
                     </div>
                 </div>"""
     return ai_html
+
+
+_PROFILE_LABELS = {
+    "conservative": "保守型",
+    "balanced": "平衡型",
+    "aggressive": "激进型",
+}
+
+
+def render_economic_analysis_html_rich(
+    result: EconomicAnalysisResult,
+    macro_conclusion: str = "",
+) -> str:
+    """渲染经济分析与资产配置为丰富 HTML（HTML 报告用）
+
+    macro_conclusion: 由 AI 热点分析（AIAnalysisResult.macro_conclusion）提供的
+    "热点 + 经济趋势" 综合结论；若非空，渲染在本区块底部。
+    """
+    if not result:
+        # 即使经济分析整体未启用，也可能有 macro_conclusion 想单独展示
+        if not macro_conclusion:
+            return ""
+        return _render_macro_conclusion_only(macro_conclusion)
+
+    if not result.success:
+        if result.skipped:
+            return f"""
+                <div class="ai-section">
+                    <div class="ai-section-header">
+                        <div class="ai-section-title">📊 经济分析与资产配置</div>
+                        <span class="ai-section-badge">AI</span>
+                    </div>
+                    <div class="ai-info">ℹ️ {_escape_html(str(result.error))}</div>
+                    {_render_macro_conclusion_block(macro_conclusion)}
+                </div>"""
+        # AI 失败：尽量用已抓到的快照数据兜底展示原始行情
+        error_msg = result.error or "未知错误"
+        fallback_html = _render_snapshot_fallback(result)
+        if fallback_html:
+            return f"""
+                <div class="ai-section">
+                    <div class="ai-section-header">
+                        <div class="ai-section-title">📊 经济分析与资产配置</div>
+                        <span class="ai-section-badge">AI</span>
+                    </div>
+                    <div class="ai-warning">AI 分析暂不可用: {_escape_html(str(error_msg))}（以下为原始行情兜底展示）</div>
+                    {fallback_html}
+                    {_render_macro_conclusion_block(macro_conclusion)}
+                </div>"""
+        return f"""
+                <div class="ai-section">
+                    <div class="ai-section-header">
+                        <div class="ai-section-title">📊 经济分析与资产配置</div>
+                        <span class="ai-section-badge">AI</span>
+                    </div>
+                    <div class="ai-warning">经济分析失败: {_escape_html(str(error_msg))}</div>
+                    {_render_macro_conclusion_block(macro_conclusion)}
+                </div>"""
+
+    html = """
+                <div class="ai-section">
+                    <div class="ai-section-header">
+                        <div class="ai-section-title">📊 经济分析与资产配置</div>
+                        <span class="ai-section-badge">AI</span>
+                    </div>
+                    <div class="ai-blocks-grid">"""
+
+    if result.global_trends:
+        content_html = _escape_html(_format_list_content(result.global_trends)).replace("\n", "<br>")
+        html += f"""
+                    <div class="ai-block">
+                        <div class="ai-block-title">全球宏观研判</div>
+                        <div class="ai-block-content">{content_html}</div>
+                    </div>"""
+
+    if result.china_trends:
+        content_html = _escape_html(_format_list_content(result.china_trends)).replace("\n", "<br>")
+        html += f"""
+                    <div class="ai-block">
+                        <div class="ai-block-title">国内宏观研判</div>
+                        <div class="ai-block-content">{content_html}</div>
+                    </div>"""
+
+    if result.key_risks:
+        risks_html = "<br>".join(f"• {_escape_html(r)}" for r in result.key_risks)
+        html += f"""
+                    <div class="ai-block">
+                        <div class="ai-block-title">关键风险</div>
+                        <div class="ai-block-content">{risks_html}</div>
+                    </div>"""
+
+    html += """
+                    </div>"""
+
+    if result.allocations:
+        html += _render_allocation_table(result)
+
+    if result.allocation_rationale:
+        html += """
+                    <div class="ai-blocks-grid">"""
+        for profile in PROFILES:
+            rationale = result.allocation_rationale.get(profile, "")
+            if not rationale:
+                continue
+            label = _PROFILE_LABELS.get(profile, profile)
+            content_html = _escape_html(_format_list_content(rationale)).replace("\n", "<br>")
+            html += f"""
+                    <div class="ai-block">
+                        <div class="ai-block-title">{_escape_html(label)} · 配置逻辑</div>
+                        <div class="ai-block-content">{content_html}</div>
+                    </div>"""
+        html += """
+                    </div>"""
+
+    # 元数据脚注
+    meta_lines = []
+    if result.snapshot_time:
+        meta_lines.append(f"快照时间: {_escape_html(result.snapshot_time)}")
+    if result.sources_used:
+        meta_lines.append(f"数据源: {_escape_html(', '.join(result.sources_used))}")
+    if result.finance_news_count:
+        meta_lines.append(f"参考财经新闻: {result.finance_news_count} 条")
+    if result.fetch_errors:
+        meta_lines.append(f"抓取异常: {len(result.fetch_errors)} 条")
+    if result.validation_warnings:
+        meta_lines.append(f"配置归一化警告: {len(result.validation_warnings)} 条")
+
+    if meta_lines or result.disclaimer:
+        html += """
+                    <div class="ai-info" style="margin-top: 12px; font-size: 12px;">"""
+        if result.disclaimer:
+            html += f"""
+                        <div>{_escape_html(result.disclaimer)}</div>"""
+        if meta_lines:
+            html += f"""
+                        <div style="margin-top: 6px; opacity: 0.75;">{' · '.join(meta_lines)}</div>"""
+        html += """
+                    </div>"""
+
+    html += _render_macro_conclusion_block(macro_conclusion)
+
+    html += """
+                </div>"""
+    return html
+
+
+def _render_macro_conclusion_block(macro_conclusion: str) -> str:
+    """渲染综合宏观研判结论卡片（嵌入经济分析区底部）。空字符串返回空。"""
+    text = (macro_conclusion or "").strip()
+    if not text:
+        return ""
+    content_html = _escape_html(_format_list_content(text)).replace("\n", "<br>")
+    return f"""
+                    <div class="ai-block" style="margin-top: 16px; border-left: 4px solid #2563eb; background: rgba(37, 99, 235, 0.06);">
+                        <div class="ai-block-title">🧭 综合研判结论（热点 × 经济趋势）</div>
+                        <div class="ai-block-content">{content_html}</div>
+                    </div>"""
+
+
+def _render_macro_conclusion_only(macro_conclusion: str) -> str:
+    """当经济分析未启用、但仍有 macro_conclusion 时，单独渲染一个轻量 section。"""
+    text = (macro_conclusion or "").strip()
+    if not text:
+        return ""
+    content_html = _escape_html(_format_list_content(text)).replace("\n", "<br>")
+    return f"""
+                <div class="ai-section">
+                    <div class="ai-section-header">
+                        <div class="ai-section-title">🧭 综合研判结论</div>
+                        <span class="ai-section-badge">AI</span>
+                    </div>
+                    <div class="ai-block" style="border-left: 4px solid #2563eb; background: rgba(37, 99, 235, 0.06);">
+                        <div class="ai-block-content">{content_html}</div>
+                    </div>
+                </div>"""
+
+
+def _render_allocation_table(result: EconomicAnalysisResult) -> str:
+    """渲染资产配置三档对比表。"""
+    # 仅展示至少一档非零的资产，避免长表全 0 行
+    visible_assets = [
+        asset for asset in ASSET_WHITELIST
+        if any(result.allocations.get(p, {}).get(asset, 0) > 0 for p in PROFILES)
+    ]
+    if not visible_assets:
+        return ""
+
+    header_cells = "".join(
+        f'<th style="padding: 6px 10px; text-align: right; border-bottom: 1px solid rgba(0,0,0,0.1);">{_escape_html(_PROFILE_LABELS.get(p, p))}</th>'
+        for p in PROFILES
+    )
+
+    rows_html = ""
+    for asset in visible_assets:
+        cells = ""
+        for p in PROFILES:
+            pct = result.allocations.get(p, {}).get(asset, 0)
+            cell_style = "padding: 5px 10px; text-align: right; border-bottom: 1px solid rgba(0,0,0,0.05);"
+            if pct > 0:
+                cells += f'<td style="{cell_style} font-weight: 600;">{pct}%</td>'
+            else:
+                cells += f'<td style="{cell_style} opacity: 0.3;">—</td>'
+        rows_html += f"""
+                            <tr>
+                                <td style="padding: 5px 10px; border-bottom: 1px solid rgba(0,0,0,0.05);">{_escape_html(asset)}</td>
+                                {cells}
+                            </tr>"""
+
+    # 总和行（用于校验）
+    totals = []
+    for p in PROFILES:
+        s = sum(result.allocations.get(p, {}).values())
+        totals.append(f'<td style="padding: 6px 10px; text-align: right; font-weight: 700; border-top: 2px solid rgba(0,0,0,0.15);">{s}%</td>')
+    totals_row = f"""
+                            <tr>
+                                <td style="padding: 6px 10px; font-weight: 700; border-top: 2px solid rgba(0,0,0,0.15);">合计</td>
+                                {''.join(totals)}
+                            </tr>"""
+
+    return f"""
+                    <div class="ai-block" style="margin-top: 16px;">
+                        <div class="ai-block-title">三档资产配置（百分比）</div>
+                        <div class="ai-block-content" style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                                <thead>
+                                    <tr>
+                                        <th style="padding: 6px 10px; text-align: left; border-bottom: 1px solid rgba(0,0,0,0.1);">资产</th>
+                                        {header_cells}
+                                    </tr>
+                                </thead>
+                                <tbody>{rows_html}{totals_row}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>"""
+
+
+# 兜底渲染：板块名 → 中文标题
+_SNAPSHOT_SECTION_LABELS = (
+    ("a_stock", "A 股指数"),
+    ("a_stock_industry", "A 股行业"),
+    ("hk_stock", "港股"),
+    ("us_stock", "美股"),
+    ("commodities", "商品"),
+    ("fx", "汇率"),
+    ("bonds", "债券"),
+)
+
+
+def _format_price_value(price: Any) -> str:
+    if price is None or price == "":
+        return "—"
+    try:
+        p = float(price)
+        if abs(p) >= 1000:
+            return f"{p:,.2f}"
+        return f"{p:.4f}".rstrip("0").rstrip(".") or "0"
+    except (ValueError, TypeError):
+        return _escape_html(str(price))
+
+
+def _format_change_pct(pct: Any) -> str:
+    if pct is None or pct == "":
+        return ""
+    try:
+        v = float(pct)
+    except (ValueError, TypeError):
+        return _escape_html(str(pct))
+    color = "#16a34a" if v >= 0 else "#dc2626"
+    sign = "+" if v >= 0 else ""
+    return f'<span style="color: {color}; font-weight: 600;">{sign}{v:.2f}%</span>'
+
+
+def _render_snapshot_section_table(title: str, rows: Dict[str, Dict[str, Any]]) -> str:
+    """渲染单个数据板块（如 A股、港股）为 HTML 表格。"""
+    if not rows:
+        return ""
+    # 过滤掉无价格的项
+    visible = [(name, d) for name, d in rows.items() if d and d.get("price") is not None]
+    if not visible:
+        return ""
+
+    body_rows = ""
+    for name, d in visible:
+        price_html = _format_price_value(d.get("price"))
+        change_html = _format_change_pct(d.get("change_pct"))
+        body_rows += f"""
+                            <tr>
+                                <td style="padding: 5px 10px; border-bottom: 1px solid rgba(0,0,0,0.05);">{_escape_html(name)}</td>
+                                <td style="padding: 5px 10px; text-align: right; border-bottom: 1px solid rgba(0,0,0,0.05); font-variant-numeric: tabular-nums;">{price_html}</td>
+                                <td style="padding: 5px 10px; text-align: right; border-bottom: 1px solid rgba(0,0,0,0.05); font-variant-numeric: tabular-nums;">{change_html}</td>
+                            </tr>"""
+
+    return f"""
+                    <div class="ai-block">
+                        <div class="ai-block-title">{_escape_html(title)}</div>
+                        <div class="ai-block-content" style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                                <thead>
+                                    <tr>
+                                        <th style="padding: 6px 10px; text-align: left; border-bottom: 1px solid rgba(0,0,0,0.1);">资产</th>
+                                        <th style="padding: 6px 10px; text-align: right; border-bottom: 1px solid rgba(0,0,0,0.1);">价格</th>
+                                        <th style="padding: 6px 10px; text-align: right; border-bottom: 1px solid rgba(0,0,0,0.1);">涨跌幅</th>
+                                    </tr>
+                                </thead>
+                                <tbody>{body_rows}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>"""
+
+
+def _render_snapshot_fallback(result: EconomicAnalysisResult) -> str:
+    """LLM 失败时的兜底：把已抓到的原始行情数据以表格形式展示出来。"""
+    snap = result.snapshot_data or {}
+    if not snap:
+        return ""
+
+    sections_html = ""
+    for key, label in _SNAPSHOT_SECTION_LABELS:
+        sections_html += _render_snapshot_section_table(label, snap.get(key) or {})
+
+    # 中国宏观（结构为 {indicator: {value, as_of}}，单独渲染）
+    china_macro = snap.get("china_macro") or {}
+    if china_macro:
+        rows = ""
+        for k, v in china_macro.items():
+            if v is None or v == "":
+                continue
+            if isinstance(v, dict):
+                raw_val = v.get("value")
+                as_of = v.get("as_of") or ""
+            else:
+                raw_val = v
+                as_of = ""
+            # 跳过 NaN / None / 空值
+            try:
+                fval = float(raw_val) if raw_val is not None else None
+                if fval is None or fval != fval:  # NaN check
+                    continue
+                value_html = f"{fval:.2f}".rstrip("0").rstrip(".") or "0"
+            except (ValueError, TypeError):
+                if raw_val is None or raw_val == "":
+                    continue
+                value_html = _escape_html(str(raw_val))
+            as_of_html = _escape_html(str(as_of)) if as_of else ""
+            rows += f"""
+                            <tr>
+                                <td style="padding: 5px 10px; border-bottom: 1px solid rgba(0,0,0,0.05);">{_escape_html(str(k))}</td>
+                                <td style="padding: 5px 10px; text-align: right; border-bottom: 1px solid rgba(0,0,0,0.05); font-variant-numeric: tabular-nums;">{value_html}</td>
+                                <td style="padding: 5px 10px; text-align: right; border-bottom: 1px solid rgba(0,0,0,0.05); color: #6b7280; font-size: 12px;">{as_of_html}</td>
+                            </tr>"""
+        if rows:
+            sections_html += f"""
+                    <div class="ai-block">
+                        <div class="ai-block-title">中国宏观</div>
+                        <div class="ai-block-content" style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                                <thead>
+                                    <tr>
+                                        <th style="padding: 6px 10px; text-align: left; border-bottom: 1px solid rgba(0,0,0,0.1);">指标</th>
+                                        <th style="padding: 6px 10px; text-align: right; border-bottom: 1px solid rgba(0,0,0,0.1);">数值</th>
+                                        <th style="padding: 6px 10px; text-align: right; border-bottom: 1px solid rgba(0,0,0,0.1);">截至日期</th>
+                                    </tr>
+                                </thead>
+                                <tbody>{rows}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>"""
+
+    if not sections_html:
+        return ""
+
+    meta_lines = []
+    if result.snapshot_time:
+        meta_lines.append(f"快照时间: {_escape_html(result.snapshot_time)}")
+    if result.sources_used:
+        meta_lines.append(f"数据源: {_escape_html(', '.join(result.sources_used))}")
+    if result.fetch_errors:
+        meta_lines.append(f"抓取异常: {len(result.fetch_errors)} 条")
+
+    meta_html = ""
+    if meta_lines:
+        meta_html = f"""
+                    <div class="ai-info" style="margin-top: 12px; font-size: 12px; opacity: 0.8;">{' · '.join(meta_lines)}</div>"""
+
+    return f"""
+                    <div class="ai-blocks-grid">{sections_html}
+                    </div>{meta_html}"""

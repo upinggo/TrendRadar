@@ -316,6 +316,7 @@ class AppContext:
         rss_items: Optional[List[Dict]] = None,
         rss_new_items: Optional[List[Dict]] = None,
         ai_analysis: Optional[Any] = None,
+        economic_analysis: Optional[Any] = None,
         standalone_data: Optional[Dict] = None,
         frequency_file: Optional[str] = None,
         report_metadata: Optional[Dict] = None,
@@ -334,7 +335,7 @@ class AppContext:
             output_dir="output",
             date_folder=self.format_date(),
             time_filename=self.format_time(),
-            render_html_func=lambda *args, **kwargs: self.render_html(*args, rss_items=rss_items, rss_new_items=rss_new_items, ai_analysis=ai_analysis, standalone_data=standalone_data, **kwargs),
+            render_html_func=lambda *args, **kwargs: self.render_html(*args, rss_items=rss_items, rss_new_items=rss_new_items, ai_analysis=ai_analysis, economic_analysis=economic_analysis, standalone_data=standalone_data, **kwargs),
             report_metadata=report_metadata,
             translate_report_func=translate_report_func,
         )
@@ -348,6 +349,7 @@ class AppContext:
         rss_items: Optional[List[Dict]] = None,
         rss_new_items: Optional[List[Dict]] = None,
         ai_analysis: Optional[Any] = None,
+        economic_analysis: Optional[Any] = None,
         standalone_data: Optional[Dict] = None,
     ) -> str:
         """渲染HTML内容"""
@@ -362,6 +364,7 @@ class AppContext:
             rss_new_items=rss_new_items,
             display_mode=self.display_mode,
             ai_analysis=ai_analysis,
+            economic_analysis=economic_analysis,
             show_new_section=self.show_new_section,
             standalone_data=standalone_data,
         )

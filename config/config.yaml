@@ -253,12 +253,14 @@ display:
     - rss                       # 3️⃣ RSS 订阅区域
     - standalone                       # 4️⃣ 独立展示区
     - ai_analysis                       # 5️⃣ AI 分析区域
+    - economic_analysis                 # 6️⃣ 经济分析与资产配置（每天首次推送生成并缓存）
   regions:
     new_items: true # 新增热点区域：含热榜新增 + RSS 新增（true=显示, false=隐藏）
     hotlist: true # 热榜区域：关键词匹配 / AI 智能筛选（true=显示, false=隐藏）
     rss: true # RSS 订阅区域（true=显示并分析, false=隐藏并跳过分析）
     standalone: true # 独立展示区：完整热榜/RSS，不受关键词过滤（true=显示, false=隐藏）
     ai_analysis: true # AI 分析区域（true=显示, false=隐藏）
+    economic_analysis: true # 经济分析区域（true=显示, false=隐藏；需 economic_analysis.enabled；每天首次推送调用 LLM 并缓存）
 
   # 独立展示区：将指定平台/RSS 完整展示，不受关键词过滤
   # 推送展示由 regions.standalone 控制，AI 分析由 ai_analysis.include_standalone 控制
@@ -448,6 +450,37 @@ ai_analysis:
   include_rank_timeline: true       # 排名时间线详细程度
                                     # true = 完整轨迹（如 1(09:30)→2(10:00)），AI 分析更准但多耗 0.5~1 倍 token
                                     # false = 简化格式（排名范围+出现次数），更省 token
+
+
+
+
+# ===============================================================
+# 9.1 经济分析与资产配置（独立功能，复用上方 ai 段的模型）
+#
+# 每天跑一次，输出全球+国内宏观研判和三档（保守/平衡/激进）资产配置
+# 百分比，附加在 daily 报告里。仅在 report.mode == 'daily' 时执行。
+#
+# 数据源：腾讯财经（A股/港股，必装）+ AKShare（中国宏观，可选）+
+# yfinance（美股/商品/汇率，可选）。任一源缺失会优雅降级。
+# ===============================================================
+economic_analysis:
+  enabled: true                    # 是否启用（true=启用, false=关闭）
+
+  # 运行策略：每天首次推送时调用 LLM 一次，结果缓存到 output/economic_analysis/YYYY-MM-DD.json
+  # 当日后续推送（无论 report.mode 是 current/incremental/daily）直接复用缓存。
+  # 失败结果不缓存以便下次推送重试自愈。
+
+  language: "Chinese"               # 输出语言
+  prompt_file: "economic_analysis_prompt.txt"
+
+  max_news: 80                      # 财经类热点新闻最多取多少条
+
+  # yfinance 代理设置（GH Actions runner 一般不需要；国内开发机需要）
+  use_proxy: false
+  proxy_url: ""
+
+  request_timeout: 10               # 单次行情请求超时（秒）
+  snapshot_retention_days: 30       # 历史快照保留天数（用于多周期变化对比）
 
 
 

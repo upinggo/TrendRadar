@@ -24,6 +24,7 @@ class AIAnalysisResult:
     rss_insights: str = ""               # RSS 深度洞察
     outlook_strategy: str = ""           # 研判与策略建议
     standalone_summaries: Dict[str, str] = field(default_factory=dict)  # 独立展示区概括 {源ID: 概括}
+    macro_conclusion: str = ""           # 综合宏观研判结论（结合热点+经济趋势）
 
     # 基础元数据
     raw_response: str = ""               # 原始响应
@@ -99,6 +100,7 @@ class AIAnalyzer:
         platforms: Optional[List[str]] = None,
         keywords: Optional[List[str]] = None,
         standalone_data: Optional[Dict] = None,
+        economic_analysis: Optional[Any] = None,
     ) -> AIAnalysisResult:
         """
         执行 AI 分析
@@ -180,6 +182,11 @@ class AIAnalyzer:
         if self.include_standalone and standalone_data:
             standalone_content, standalone_count = self._prepare_standalone_content(standalone_data)
         user_prompt = user_prompt.replace("{standalone_content}", standalone_content)
+
+        # 构建经济快照与趋势文本（用于综合结论）
+        econ_snapshot_text, econ_trends_text = self._format_economic_context(economic_analysis)
+        user_prompt = user_prompt.replace("{economic_snapshot}", econ_snapshot_text or "（暂无经济数据）")
+        user_prompt = user_prompt.replace("{economic_trends}", econ_trends_text or "（暂无宏观研判）")
 
         if self.debug:
             print("\n" + "=" * 80)
@@ -545,6 +552,90 @@ class AIAnalyzer:
         )
         return "\n".join(lines), standalone_count
 
+    def _format_economic_context(self, economic_analysis: Optional[Any]) -> tuple:
+        """
+        把经济分析结果（EconomicAnalysisResult）格式化为两块文本：
+          - 行情快照摘要（沪深300/恒生科技/纳斯达克100/黄金/原油/汇率/十年期国债等关键资产）
+          - 宏观研判摘要（global_trends / china_trends / key_risks）
+
+        缺失字段优雅降级，返回空串而不抛异常，让 prompt 仍可正常发送。
+        """
+        if not economic_analysis:
+            return "", ""
+
+        snapshot_lines: List[str] = []
+        snapshot = getattr(economic_analysis, "snapshot_data", None) or {}
+
+        # 关注的核心资产，限制总条目数避免 prompt 爆炸
+        section_labels = (
+            ("a_stock", "A股"),
+            ("hk_stock", "港股"),
+            ("us_stock", "美股"),
+            ("commodities", "商品"),
+            ("bonds", "债券"),
+            ("fx", "汇率"),
+        )
+        max_per_section = 3
+        for key, label in section_labels:
+            section = snapshot.get(key)
+            if not isinstance(section, dict) or not section:
+                continue
+            items: List[str] = []
+            for asset, info in list(section.items())[:max_per_section]:
+                if not isinstance(info, dict):
+                    continue
+                price = info.get("price")
+                change = info.get("change_pct")
+                if price is None and change is None:
+                    continue
+                parts = [str(asset)]
+                if price is not None:
+                    try:
+                        parts.append(f"{float(price):.2f}")
+                    except (ValueError, TypeError):
+                        parts.append(str(price))
+                if change is not None:
+                    try:
+                        c = float(change)
+                        sign = "+" if c >= 0 else ""
+                        parts.append(f"{sign}{c:.2f}%")
+                    except (ValueError, TypeError):
+                        parts.append(str(change))
+                items.append(" ".join(parts))
+            if items:
+                snapshot_lines.append(f"- {label}: " + "; ".join(items))
+
+        # 中国宏观（CPI/PPI/PMI 等）
+        china_macro = snapshot.get("china_macro") if isinstance(snapshot, dict) else None
+        if isinstance(china_macro, dict) and china_macro:
+            macro_items: List[str] = []
+            for k, v in list(china_macro.items())[:5]:
+                if isinstance(v, dict):
+                    val = v.get("value")
+                    if val is not None:
+                        macro_items.append(f"{k}={val}")
+            if macro_items:
+                snapshot_lines.append("- 中国宏观: " + "; ".join(macro_items))
+
+        snapshot_text = "\n".join(snapshot_lines)
+
+        trends_lines: List[str] = []
+        global_trends = getattr(economic_analysis, "global_trends", "") or ""
+        china_trends = getattr(economic_analysis, "china_trends", "") or ""
+        key_risks = getattr(economic_analysis, "key_risks", []) or []
+
+        if global_trends:
+            trends_lines.append(f"全球宏观研判: {str(global_trends).strip()}")
+        if china_trends:
+            trends_lines.append(f"国内宏观研判: {str(china_trends).strip()}")
+        if key_risks:
+            risks_str = "; ".join(str(r).strip() for r in key_risks if str(r).strip())
+            if risks_str:
+                trends_lines.append(f"关键风险: {risks_str}")
+
+        trends_text = "\n".join(trends_lines)
+        return snapshot_text, trends_text
+
     def _parse_response(self, response: str) -> AIAnalysisResult:
         """解析 AI 响应"""
         result = AIAnalysisResult(raw_response=response)
@@ -618,6 +709,7 @@ class AIAnalyzer:
             result.signals = data.get("signals", "")
             result.rss_insights = data.get("rss_insights", "")
             result.outlook_strategy = data.get("outlook_strategy", "")
+            result.macro_conclusion = data.get("macro_conclusion", "")
 
             # 解析独立展示区概括
             summaries = data.get("standalone_summaries", {})

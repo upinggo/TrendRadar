@@ -27,6 +27,10 @@ from trendradar.crawler import DataFetcher
 from trendradar.storage import convert_crawl_results_to_news_data
 from trendradar.utils.time import DEFAULT_TIMEZONE, is_within_days, calculate_days_old
 from trendradar.ai import AIAnalyzer, AIAnalysisResult
+from trendradar.ai.economic_analyzer import EconomicAnalyzer, EconomicAnalysisResult
+from trendradar.ai.economic_data import EconomicDataFetcher
+from trendradar.ai.economic_snapshot_store import SnapshotStore, compute_trend_deltas
+from trendradar.ai.economic_analysis_store import AnalysisStore
 from trendradar.core.scheduler import ResolvedSchedule
 from trendradar.core.cdn import fetch_with_fallback
 
@@ -459,6 +463,7 @@ class NewsAnalyzer:
         current_results: Optional[Dict] = None,
         schedule: ResolvedSchedule = None,
         standalone_data: Optional[Dict] = None,
+        economic_analysis: Optional[EconomicAnalysisResult] = None,
     ) -> Optional[AIAnalysisResult]:
         """执行 AI 分析"""
         analysis_config = self.ctx.config.get("AI_ANALYSIS", {})
@@ -551,6 +556,7 @@ class NewsAnalyzer:
                 platforms=platforms,
                 keywords=keywords,
                 standalone_data=ai_standalone,
+                economic_analysis=economic_analysis,
             )
 
             # 设置 AI 分析使用的模式
@@ -586,6 +592,127 @@ class NewsAnalyzer:
             print(f"[AI] 详细错误堆栈:", file=sys.stderr)
             traceback.print_exc(file=sys.stderr)
             return AIAnalysisResult(success=False, error=f"{error_type}: {error_msg}")
+
+    def _run_economic_analysis(
+        self,
+        stats: List[Dict],
+    ) -> Optional[EconomicAnalysisResult]:
+        """执行经济分析与资产配置。每天首次运行调用 LLM 并缓存，当日后续运行直接复用缓存。"""
+        econ_config = self.ctx.config.get("ECONOMIC_ANALYSIS", {})
+        if not econ_config.get("ENABLED", False):
+            return None
+
+        ai_config = self.ctx.config.get("AI", {})
+        has_api_key = bool(ai_config.get("API_KEY"))
+        if not has_api_key:
+            print("[Economic] 未配置 AI API Key，跳过 LLM 分析，仅抓取行情数据兜底展示")
+
+        retention_days = econ_config.get("SNAPSHOT_RETENTION_DAYS", 30)
+        analysis_store = AnalysisStore(retention_days=retention_days)
+        today = self.ctx.get_time()
+
+        # 优先复用当日缓存（仅成功结果），失败结果不缓存以便下次重试
+        cached = analysis_store.load(today)
+        if cached and cached.success:
+            print(f"[Economic] 复用今日缓存结果（{today.strftime('%Y-%m-%d')}）")
+            return cached
+
+        print("[Economic] 抓取经济数据快照...")
+        debug = self.ctx.config.get("DEBUG", False)
+        snapshot = None
+        try:
+            fetcher = EconomicDataFetcher(
+                use_proxy=econ_config.get("USE_PROXY", False),
+                proxy_url=econ_config.get("PROXY_URL", ""),
+                get_time_func=self.ctx.get_time,
+                debug=debug,
+                request_timeout=econ_config.get("REQUEST_TIMEOUT", 10.0),
+            )
+            snapshot = fetcher.fetch_snapshot()
+            print(f"[Economic] 数据源: {snapshot.sources_used or '无'}; 异常: {len(snapshot.fetch_errors)} 条")
+
+            # 持久化 + 多周期变化
+            store = SnapshotStore(retention_days=retention_days)
+            try:
+                store.save(snapshot, when=today)
+                store.cleanup()
+            except Exception as e:
+                print(f"[Economic] 快照持久化失败（不影响本次分析）: {type(e).__name__}: {e}")
+
+            # 没有 API Key：直接以快照数据构造兜底结果返回
+            if not has_api_key:
+                from dataclasses import asdict as _asdict
+                return EconomicAnalysisResult(
+                    success=False,
+                    error="未配置 AI API Key，无法进行宏观研判与资产配置",
+                    snapshot_time=snapshot.snapshot_time,
+                    sources_used=list(snapshot.sources_used),
+                    fetch_errors=list(snapshot.fetch_errors),
+                    snapshot_data=_asdict(snapshot),
+                )
+
+            history = store.load_recent(days=30)
+            deltas = compute_trend_deltas(history)
+
+            # 抽取财经类热点新闻
+            finance_news = self._extract_finance_news(stats)
+
+            print("[Economic] 调用 AI 进行宏观研判与资产配置...")
+            analyzer = EconomicAnalyzer(ai_config, econ_config, self.ctx.get_time, debug=debug)
+            result = analyzer.analyze(
+                snapshot=snapshot,
+                trend_deltas=deltas,
+                finance_news=finance_news,
+            )
+
+            if result.success:
+                print(f"[Economic] 分析完成（{len(result.allocations)} 档配置，{len(result.validation_warnings)} 条归一化提示）")
+                try:
+                    analysis_store.save(result, when=today)
+                    analysis_store.cleanup()
+                except Exception as e:
+                    print(f"[Economic] 分析结果缓存失败（不影响本次推送）: {type(e).__name__}: {e}")
+            elif result.skipped:
+                print(f"[Economic] 跳过: {result.error}")
+            else:
+                print(f"[Economic] 分析失败: {result.error}（将以原始行情兜底渲染）")
+            return result
+        except Exception as e:
+            import traceback
+            error_type = type(e).__name__
+            error_msg = str(e)[:200]
+            print(f"[Economic] 出错 ({error_type}): {error_msg}")
+            if debug:
+                traceback.print_exc()
+            # 即便出错也带上已抓到的快照数据，让前端可回退展示原始行情
+            fallback = EconomicAnalysisResult(success=False, error=f"{error_type}: {error_msg}")
+            if snapshot is not None:
+                from dataclasses import asdict as _asdict
+                fallback.snapshot_time = snapshot.snapshot_time
+                fallback.sources_used = list(snapshot.sources_used)
+                fallback.fetch_errors = list(snapshot.fetch_errors)
+                fallback.snapshot_data = _asdict(snapshot)
+            return fallback
+
+    @staticmethod
+    def _extract_finance_news(stats: List[Dict]) -> List[Dict]:
+        """从热榜命中的关键词分组中筛出财经/股市/房产类条目，供经济分析参考。"""
+        if not stats:
+            return []
+        finance_keywords = (
+            "股", "市", "房", "楼", "地产", "金", "美元", "汇率", "央行", "政策",
+            "经济", "财", "金融", "通胀", "GDP", "CPI", "PMI", "M2", "国债",
+            "降息", "加息", "LPR", "证监", "基金", "比特币", "石油", "原油",
+            "黄金", "白银", "期货", "外汇", "债券",
+        )
+        out: List[Dict] = []
+        for stat in stats:
+            word = str(stat.get("word", ""))
+            if not word:
+                continue
+            if any(kw in word for kw in finance_keywords):
+                out.append(stat)
+        return out
 
     def _load_analysis_data(
         self,
@@ -862,6 +989,10 @@ class NewsAnalyzer:
                 self.ctx.rank_threshold,
             )
 
+        # 经济分析与资产配置（每天首次运行调用 LLM 并缓存，当日后续推送复用）
+        # 先于 AI 分析执行，把行情快照与宏观研判注入 AI 分析的 macro_conclusion 板块
+        economic_result = self._run_economic_analysis(stats)
+
         # AI 分析（如果启用，用于 HTML 报告）
         ai_result = None
         ai_config = self.ctx.config.get("AI_ANALYSIS", {})
@@ -872,7 +1003,8 @@ class NewsAnalyzer:
             ai_result = self._run_ai_analysis(
                 stats, rss_items, mode, report_type, id_to_name,
                 current_results=data_source, schedule=schedule,
-                standalone_data=standalone_data
+                standalone_data=standalone_data,
+                economic_analysis=economic_result,
             )
 
         # 翻译 RSS 和独立展示区内容（如果启用）— 在 HTML 生成前执行，确保网页版也能展示翻译内容
@@ -910,6 +1042,7 @@ class NewsAnalyzer:
             display_regions = self.ctx.config.get("DISPLAY", {}).get("REGIONS", {})
             html_standalone = standalone_data if display_regions.get("STANDALONE", False) else None
             html_ai = ai_result if display_regions.get("AI_ANALYSIS", True) else None
+            html_econ = economic_result if display_regions.get("ECONOMIC_ANALYSIS", True) else None
             html_file = self.ctx.generate_html(
                 stats,
                 total_titles,
@@ -921,6 +1054,7 @@ class NewsAnalyzer:
                 rss_items=rss_items,
                 rss_new_items=rss_new_items,
                 ai_analysis=html_ai,
+                economic_analysis=html_econ,
                 standalone_data=html_standalone,
                 frequency_file=self.frequency_file,
                 report_metadata={

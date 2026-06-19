@@ -8,6 +8,9 @@ TrendRadar AI 模块
 from .analyzer import AIAnalyzer, AIAnalysisResult
 from .filter import AIFilter, AIFilterResult
 from .translator import AITranslator, TranslationResult, BatchTranslationResult
+from .economic_analyzer import EconomicAnalyzer, EconomicAnalysisResult
+from .economic_data import EconomicDataFetcher, EconomicSnapshot
+from .economic_snapshot_store import SnapshotStore, compute_trend_deltas
 from .formatter import (
     get_ai_analysis_renderer,
     render_ai_analysis_markdown,
@@ -15,6 +18,7 @@ from .formatter import (
     render_ai_analysis_dingtalk,
     render_ai_analysis_html_rich,
     render_ai_analysis_plain,
+    render_economic_analysis_html_rich,
 )
 
 __all__ = [
@@ -28,6 +32,13 @@ __all__ = [
     "AITranslator",
     "TranslationResult",
     "BatchTranslationResult",
+    # 经济分析
+    "EconomicAnalyzer",
+    "EconomicAnalysisResult",
+    "EconomicDataFetcher",
+    "EconomicSnapshot",
+    "SnapshotStore",
+    "compute_trend_deltas",
     # 格式化
     "get_ai_analysis_renderer",
     "render_ai_analysis_markdown",
@@ -35,4 +46,5 @@ __all__ = [
     "render_ai_analysis_dingtalk",
     "render_ai_analysis_html_rich",
     "render_ai_analysis_plain",
+    "render_economic_analysis_html_rich",
 ]

@@ -228,11 +228,11 @@ def _load_display_config(config_data: Dict) -> Dict:
     standalone = display.get("standalone", {})
 
     # 默认区域顺序
-    default_region_order = ["hotlist", "rss", "new_items", "standalone", "ai_analysis"]
+    default_region_order = ["hotlist", "rss", "new_items", "standalone", "ai_analysis", "economic_analysis"]
     region_order = display.get("region_order", default_region_order)
 
     # 验证 region_order 中的值是否合法
-    valid_regions = {"hotlist", "rss", "new_items", "standalone", "ai_analysis"}
+    valid_regions = {"hotlist", "rss", "new_items", "standalone", "ai_analysis", "economic_analysis"}
     region_order = [r for r in region_order if r in valid_regions]
 
     # 如果过滤后为空，使用默认顺序
@@ -249,6 +249,7 @@ def _load_display_config(config_data: Dict) -> Dict:
             "RSS": regions.get("rss", True),
             "STANDALONE": regions.get("standalone", False),
             "AI_ANALYSIS": regions.get("ai_analysis", True),
+            "ECONOMIC_ANALYSIS": regions.get("economic_analysis", True),
         },
         # 独立展示区配置
         "STANDALONE": {
@@ -298,6 +299,24 @@ def _load_ai_analysis_config(config_data: Dict) -> Dict:
         "INCLUDE_RSS": ai_config.get("include_rss", True),
         "INCLUDE_RANK_TIMELINE": ai_config.get("include_rank_timeline", False),
         "INCLUDE_STANDALONE": ai_config.get("include_standalone", False),
+    }
+
+
+def _load_economic_analysis_config(config_data: Dict) -> Dict:
+    """加载经济分析配置（功能配置，模型配置见 _load_ai_config）"""
+    econ = config_data.get("economic_analysis", {})
+
+    enabled_env = _get_env_bool("ECONOMIC_ANALYSIS_ENABLED")
+
+    return {
+        "ENABLED": enabled_env if enabled_env is not None else econ.get("enabled", False),
+        "LANGUAGE": econ.get("language", "Chinese"),
+        "PROMPT_FILE": econ.get("prompt_file", "economic_analysis_prompt.txt"),
+        "MAX_NEWS": int(econ.get("max_news", 80)),
+        "USE_PROXY": bool(econ.get("use_proxy", False)),
+        "PROXY_URL": _get_env_str("ECONOMIC_PROXY_URL") or econ.get("proxy_url", ""),
+        "REQUEST_TIMEOUT": float(econ.get("request_timeout", 10)),
+        "SNAPSHOT_RETENTION_DAYS": int(econ.get("snapshot_retention_days", 30)),
     }
 
 
@@ -587,6 +606,9 @@ def load_config(config_path: Optional[str] = None) -> Dict[str, Any]:
 
     # AI 分析配置
     config["AI_ANALYSIS"] = _load_ai_analysis_config(config_data)
+
+    # 经济分析配置
+    config["ECONOMIC_ANALYSIS"] = _load_economic_analysis_config(config_data)
 
     # AI 翻译配置
     config["AI_TRANSLATION"] = _load_ai_translation_config(config_data)

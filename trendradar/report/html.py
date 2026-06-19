@@ -10,7 +10,10 @@ from typing import Any, Dict, List, Optional, Callable
 
 from trendradar.report.helpers import html_escape, calculate_rank_trend
 from trendradar.utils.time import convert_time_for_display
-from trendradar.ai.formatter import render_ai_analysis_html_rich
+from trendradar.ai.formatter import (
+    render_ai_analysis_html_rich,
+    render_economic_analysis_html_rich,
+)
 
 
 def render_html_content(
@@ -26,6 +29,7 @@ def render_html_content(
     display_mode: str = "keyword",
     standalone_data: Optional[Dict] = None,
     ai_analysis: Optional[Any] = None,
+    economic_analysis: Optional[Any] = None,
     show_new_section: bool = True,
 ) -> str:
     """渲染HTML内容
@@ -42,6 +46,7 @@ def render_html_content(
         display_mode: 显示模式 ("keyword"=按关键词分组, "platform"=按平台分组)
         standalone_data: 独立展示区数据（可选），包含 platforms 和 rss_feeds
         ai_analysis: AI 分析结果对象（可选），AIAnalysisResult 实例
+        economic_analysis: 经济分析结果对象（可选），EconomicAnalysisResult 实例
         show_new_section: 是否显示新增热点区域
 
     Returns:
@@ -2141,6 +2146,18 @@ def render_html_content(
     # 生成 AI 分析 HTML
     ai_html = render_ai_analysis_html_rich(ai_analysis) if ai_analysis else ""
 
+    # 生成经济分析 HTML（合并 AI 热点分析的 macro_conclusion 在区块底部展示）
+    macro_conclusion = ""
+    if ai_analysis is not None:
+        macro_conclusion = getattr(ai_analysis, "macro_conclusion", "") or ""
+    if economic_analysis is not None:
+        economic_html = render_economic_analysis_html_rich(economic_analysis, macro_conclusion=macro_conclusion)
+    elif macro_conclusion:
+        # 经济分析未启用但仍有综合结论：单独渲染一个轻量结论 section
+        economic_html = render_economic_analysis_html_rich(None, macro_conclusion=macro_conclusion)
+    else:
+        economic_html = ""
+
     # 准备各区域内容映射
     region_contents = {
         "hotlist": stats_html,
@@ -2148,6 +2165,7 @@ def render_html_content(
         "new_items": (new_titles_html, rss_new_html),  # 元组，分别处理
         "standalone": standalone_html,
         "ai_analysis": ai_html,
+        "economic_analysis": economic_html,
     }
 
     def add_section_divider(content: str) -> str:
