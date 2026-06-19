@@ -40,7 +40,7 @@ app:
 # 详细时间线图请查看 config/timeline.yaml
 # ===============================================================
 schedule:
-  enabled: false                        # 是否启用调度系统（true=启用, false=关闭，默认关闭）
+  enabled: true                        # 是否启用调度系统（true=启用, false=关闭，默认关闭）
   preset: "morning_evening"             # 预设模板名称（见上方说明）
 
 
@@ -318,7 +318,7 @@ notification:
       webhook_url: ""                 # Slack Incoming Webhook URL
 
     generic_webhook:
-      webhook_url: ""                 # 通用 Webhook URL（支持 Discord、Matrix、IFTTT 等）
+      webhook_url: ""                 # 通用 Webhook URL（支持 Discord、Matrix、IFTTT 等）ttps://sctapi.ftqq.com/your_key.send
       payload_template: ""            # JSON 模板，支持 {title} 和 {content} 占位符
                                       # 示例：{"content": "{content}"}
                                       # 留空则使用默认格式：{"title": "{title}", "content": "{content}"}
@@ -544,5 +544,6 @@ advanced:
     feishu: 30000
     bark: 4000
     slack: 4000
+    generic_webhook: 64000            # Server Chan (sct.ftqq.com) 支持大报文，合并为一批
   batch_send_interval: 3              # 批次发送间隔（秒）
   feishu_message_separator: "━━━━━━━━━━━━━━━━"
