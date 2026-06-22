@@ -284,20 +284,29 @@ notification:
                                       # 开启 schedule 后此项仍为总开关：false=永远不推送，true=由调度控制
 
   # 推送渠道配置
+  #
+  # 每个渠道可独立设置 format（推送格式）：
+  #   default = 完整报告（统计/分组头/排名/次数/RSS/独立展示区/AI 分析），默认值
+  #   compact = 紧凑模式（仅 [标题](链接) 列表 + AI 分析；新增/RSS/独立展示区均不推送）
+  # 邮件渠道不支持 format（邮件始终发送完整 HTML 报告）。
   channels:
     feishu:
       webhook_url: ""                 # 飞书机器人 webhook URL
+      format: "default"               # default | compact
 
     dingtalk:
       webhook_url: ""                 # 钉钉机器人 webhook URL
+      format: "default"               # default | compact
 
     wework:
       webhook_url: ""                 # 企业微信机器人 webhook URL
       msg_type: "markdown"            # 消息类型：markdown(群机器人) | text(个人微信应用)
+      format: "default"               # default | compact
 
     telegram:
       bot_token: ""                   # Telegram Bot Token
       chat_id: ""                     # Telegram Chat ID
+      format: "default"               # default | compact
 
     email:
       from: ""                        # 发件人邮箱地址
@@ -310,18 +319,22 @@ notification:
       server_url: "https://ntfy.sh"   # ntfy 服务器地址（可改为自托管）
       topic: ""                       # ntfy 主题名称
       token: ""                       # ntfy 访问令牌（可选，用于私有主题）
+      format: "default"               # default | compact
 
     bark:
       url: ""                         # Bark 推送 URL（格式：https://api.day.app/your_device_key）
+      format: "default"               # default | compact
 
     slack:
       webhook_url: ""                 # Slack Incoming Webhook URL
+      format: "default"               # default | compact
 
     generic_webhook:
       webhook_url: ""                 # 通用 Webhook URL（支持 Discord、Matrix、IFTTT 等）ttps://sctapi.ftqq.com/your_key.send
       payload_template: ""            # JSON 模板，支持 {title} 和 {content} 占位符
                                       # 示例：{"content": "{content}"}
                                       # 留空则使用默认格式：{"title": "{title}", "content": "{content}"}
+      format: "compact"               # default | compact
 
 
 # ===============================================================

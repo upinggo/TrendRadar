@@ -436,14 +436,18 @@ def _load_webhook_config(config_data: Dict) -> Dict:
     return {
         # 飞书
         "FEISHU_WEBHOOK_URL": _get_env_str("FEISHU_WEBHOOK_URL") or feishu.get("webhook_url", ""),
+        "FEISHU_FORMAT": _get_env_str("FEISHU_FORMAT") or feishu.get("format", "default"),
         # 钉钉
         "DINGTALK_WEBHOOK_URL": _get_env_str("DINGTALK_WEBHOOK_URL") or dingtalk.get("webhook_url", ""),
+        "DINGTALK_FORMAT": _get_env_str("DINGTALK_FORMAT") or dingtalk.get("format", "default"),
         # 企业微信
         "WEWORK_WEBHOOK_URL": _get_env_str("WEWORK_WEBHOOK_URL") or wework.get("webhook_url", ""),
         "WEWORK_MSG_TYPE": _get_env_str("WEWORK_MSG_TYPE") or wework.get("msg_type", "markdown"),
+        "WEWORK_FORMAT": _get_env_str("WEWORK_FORMAT") or wework.get("format", "default"),
         # Telegram
         "TELEGRAM_BOT_TOKEN": _get_env_str("TELEGRAM_BOT_TOKEN") or telegram.get("bot_token", ""),
         "TELEGRAM_CHAT_ID": _get_env_str("TELEGRAM_CHAT_ID") or telegram.get("chat_id", ""),
+        "TELEGRAM_FORMAT": _get_env_str("TELEGRAM_FORMAT") or telegram.get("format", "default"),
         # 邮件
         "EMAIL_FROM": _get_env_str("EMAIL_FROM") or email.get("from", ""),
         "EMAIL_PASSWORD": _get_env_str("EMAIL_PASSWORD") or email.get("password", ""),
@@ -454,13 +458,17 @@ def _load_webhook_config(config_data: Dict) -> Dict:
         "NTFY_SERVER_URL": _get_env_str("NTFY_SERVER_URL") or ntfy.get("server_url") or "https://ntfy.sh",
         "NTFY_TOPIC": _get_env_str("NTFY_TOPIC") or ntfy.get("topic", ""),
         "NTFY_TOKEN": _get_env_str("NTFY_TOKEN") or ntfy.get("token", ""),
+        "NTFY_FORMAT": _get_env_str("NTFY_FORMAT") or ntfy.get("format", "default"),
         # Bark
         "BARK_URL": _get_env_str("BARK_URL") or bark.get("url", ""),
+        "BARK_FORMAT": _get_env_str("BARK_FORMAT") or bark.get("format", "default"),
         # Slack
         "SLACK_WEBHOOK_URL": _get_env_str("SLACK_WEBHOOK_URL") or slack.get("webhook_url", ""),
+        "SLACK_FORMAT": _get_env_str("SLACK_FORMAT") or slack.get("format", "default"),
         # 通用 Webhook
         "GENERIC_WEBHOOK_URL": _get_env_str("GENERIC_WEBHOOK_URL") or generic.get("webhook_url", ""),
         "GENERIC_WEBHOOK_TEMPLATE": _get_env_str("GENERIC_WEBHOOK_TEMPLATE") or generic.get("payload_template", ""),
+        "GENERIC_WEBHOOK_FORMAT": _get_env_str("GENERIC_WEBHOOK_FORMAT") or generic.get("format", "default"),
     }
 
 

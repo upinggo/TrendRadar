@@ -396,6 +396,26 @@ class NotificationDispatcher:
 
         return any(results) if results else False
 
+    def _channel_format(self, channel_key: str) -> str:
+        """获取指定渠道的 format 配置（compact | default）
+
+        Args:
+            channel_key: 渠道名（大写，如 FEISHU/DINGTALK/WEWORK/TELEGRAM/NTFY/BARK/SLACK/GENERIC_WEBHOOK）
+
+        Returns:
+            "compact" 或 "default"
+        """
+        value = (self.config.get(f"{channel_key}_FORMAT") or "default").strip().lower()
+        return "compact" if value == "compact" else "default"
+
+    def _compact_regions(self, display_regions: Optional[Dict]) -> Dict:
+        """构建紧凑模式下的有效 display_regions：强制关闭 NEW_ITEMS/RSS/STANDALONE，仅保留热榜与 AI 分析"""
+        base = dict(display_regions or {})
+        base["NEW_ITEMS"] = False
+        base["RSS"] = False
+        base["STANDALONE"] = False
+        return base
+
     def _apply_display_regions(
         self,
         report_data: Dict,
@@ -432,8 +452,10 @@ class NotificationDispatcher:
         standalone_data: Optional[Dict] = None,
     ) -> bool:
         """发送到飞书（多账号，支持热榜+RSS合并+AI分析+独立展示区）"""
+        compact = self._channel_format("FEISHU") == "compact"
+        effective_regions = self._compact_regions(display_regions) if compact else display_regions
         rd, ri, rn, ai, sd = self._apply_display_regions(
-            report_data, display_regions, rss_items, rss_new_items, ai_analysis, standalone_data
+            report_data, effective_regions, rss_items, rss_new_items, ai_analysis, standalone_data
         )
 
         return self._send_to_multi_accounts(
@@ -454,8 +476,9 @@ class NotificationDispatcher:
                 rss_items=ri,
                 rss_new_items=rn,
                 ai_analysis=ai,
-                display_regions=display_regions or {},
+                display_regions=effective_regions or {},
                 standalone_data=sd,
+                compact=compact,
             ),
         )
 
@@ -473,8 +496,10 @@ class NotificationDispatcher:
         standalone_data: Optional[Dict] = None,
     ) -> bool:
         """发送到钉钉（多账号，支持热榜+RSS合并+AI分析+独立展示区）"""
+        compact = self._channel_format("DINGTALK") == "compact"
+        effective_regions = self._compact_regions(display_regions) if compact else display_regions
         rd, ri, rn, ai, sd = self._apply_display_regions(
-            report_data, display_regions, rss_items, rss_new_items, ai_analysis, standalone_data
+            report_data, effective_regions, rss_items, rss_new_items, ai_analysis, standalone_data
         )
 
         return self._send_to_multi_accounts(
@@ -494,8 +519,9 @@ class NotificationDispatcher:
                 rss_items=ri,
                 rss_new_items=rn,
                 ai_analysis=ai,
-                display_regions=display_regions or {},
+                display_regions=effective_regions or {},
                 standalone_data=sd,
+                compact=compact,
             ),
         )
 
@@ -513,8 +539,10 @@ class NotificationDispatcher:
         standalone_data: Optional[Dict] = None,
     ) -> bool:
         """发送到企业微信（多账号，支持热榜+RSS合并+AI分析+独立展示区）"""
+        compact = self._channel_format("WEWORK") == "compact"
+        effective_regions = self._compact_regions(display_regions) if compact else display_regions
         rd, ri, rn, ai, sd = self._apply_display_regions(
-            report_data, display_regions, rss_items, rss_new_items, ai_analysis, standalone_data
+            report_data, effective_regions, rss_items, rss_new_items, ai_analysis, standalone_data
         )
 
         return self._send_to_multi_accounts(
@@ -535,8 +563,9 @@ class NotificationDispatcher:
                 rss_items=ri,
                 rss_new_items=rn,
                 ai_analysis=ai,
-                display_regions=display_regions or {},
+                display_regions=effective_regions or {},
                 standalone_data=sd,
+                compact=compact,
             ),
         )
 
@@ -554,10 +583,12 @@ class NotificationDispatcher:
         standalone_data: Optional[Dict] = None,
     ) -> bool:
         """发送到 Telegram（多账号，需验证 token 和 chat_id 配对，支持热榜+RSS合并+AI分析+独立展示区）"""
+        compact = self._channel_format("TELEGRAM") == "compact"
+        effective_regions = self._compact_regions(display_regions) if compact else display_regions
         report_data, rss_items, rss_new_items, ai_analysis, standalone_data = self._apply_display_regions(
-            report_data, display_regions, rss_items, rss_new_items, ai_analysis, standalone_data
+            report_data, effective_regions, rss_items, rss_new_items, ai_analysis, standalone_data
         )
-        display_regions = display_regions or {}
+        display_regions = effective_regions or {}
 
         telegram_tokens = parse_multi_account_config(self.config["TELEGRAM_BOT_TOKEN"])
         telegram_chat_ids = parse_multi_account_config(self.config["TELEGRAM_CHAT_ID"])
@@ -599,6 +630,7 @@ class NotificationDispatcher:
                     ai_analysis=ai_analysis,
                     display_regions=display_regions,
                     standalone_data=standalone_data,
+                    compact=compact,
                 )
                 results.append(result)
 
@@ -618,10 +650,12 @@ class NotificationDispatcher:
         standalone_data: Optional[Dict] = None,
     ) -> bool:
         """发送到 ntfy（多账号，需验证 topic 和 token 配对，支持热榜+RSS合并+AI分析+独立展示区）"""
+        compact = self._channel_format("NTFY") == "compact"
+        effective_regions = self._compact_regions(display_regions) if compact else display_regions
         report_data, rss_items, rss_new_items, ai_analysis, standalone_data = self._apply_display_regions(
-            report_data, display_regions, rss_items, rss_new_items, ai_analysis, standalone_data
+            report_data, effective_regions, rss_items, rss_new_items, ai_analysis, standalone_data
         )
-        display_regions = display_regions or {}
+        display_regions = effective_regions or {}
 
         ntfy_server_url = self.config["NTFY_SERVER_URL"]
         ntfy_topics = parse_multi_account_config(self.config["NTFY_TOPIC"])
@@ -662,6 +696,7 @@ class NotificationDispatcher:
                     ai_analysis=ai_analysis,
                     display_regions=display_regions,
                     standalone_data=standalone_data,
+                    compact=compact,
                 )
                 results.append(result)
 
@@ -681,8 +716,10 @@ class NotificationDispatcher:
         standalone_data: Optional[Dict] = None,
     ) -> bool:
         """发送到 Bark（多账号，支持热榜+RSS合并+AI分析+独立展示区）"""
+        compact = self._channel_format("BARK") == "compact"
+        effective_regions = self._compact_regions(display_regions) if compact else display_regions
         rd, ri, rn, ai, sd = self._apply_display_regions(
-            report_data, display_regions, rss_items, rss_new_items, ai_analysis, standalone_data
+            report_data, effective_regions, rss_items, rss_new_items, ai_analysis, standalone_data
         )
 
         return self._send_to_multi_accounts(
@@ -702,8 +739,9 @@ class NotificationDispatcher:
                 rss_items=ri,
                 rss_new_items=rn,
                 ai_analysis=ai,
-                display_regions=display_regions or {},
+                display_regions=effective_regions or {},
                 standalone_data=sd,
+                compact=compact,
             ),
         )
 
@@ -721,8 +759,10 @@ class NotificationDispatcher:
         standalone_data: Optional[Dict] = None,
     ) -> bool:
         """发送到 Slack（多账号，支持热榜+RSS合并+AI分析+独立展示区）"""
+        compact = self._channel_format("SLACK") == "compact"
+        effective_regions = self._compact_regions(display_regions) if compact else display_regions
         rd, ri, rn, ai, sd = self._apply_display_regions(
-            report_data, display_regions, rss_items, rss_new_items, ai_analysis, standalone_data
+            report_data, effective_regions, rss_items, rss_new_items, ai_analysis, standalone_data
         )
 
         return self._send_to_multi_accounts(
@@ -742,8 +782,9 @@ class NotificationDispatcher:
                 rss_items=ri,
                 rss_new_items=rn,
                 ai_analysis=ai,
-                display_regions=display_regions or {},
+                display_regions=effective_regions or {},
                 standalone_data=sd,
+                compact=compact,
             ),
         )
 
@@ -761,10 +802,12 @@ class NotificationDispatcher:
         standalone_data: Optional[Dict] = None,
     ) -> bool:
         """发送到通用 Webhook（多账号，支持热榜+RSS合并+AI分析+独立展示区）"""
+        compact = self._channel_format("GENERIC_WEBHOOK") == "compact"
+        effective_regions = self._compact_regions(display_regions) if compact else display_regions
         report_data, rss_items, rss_new_items, ai_analysis, standalone_data = self._apply_display_regions(
-            report_data, display_regions, rss_items, rss_new_items, ai_analysis, standalone_data
+            report_data, effective_regions, rss_items, rss_new_items, ai_analysis, standalone_data
         )
-        display_regions = display_regions or {}
+        display_regions = effective_regions or {}
 
         urls = parse_multi_account_config(self.config.get("GENERIC_WEBHOOK_URL", ""))
         templates = parse_multi_account_config(self.config.get("GENERIC_WEBHOOK_TEMPLATE", ""))
@@ -805,6 +848,7 @@ class NotificationDispatcher:
                 ai_analysis=ai_analysis,
                 display_regions=display_regions,
                 standalone_data=standalone_data,
+                compact=compact,
             )
             results.append(result)
 

@@ -250,3 +250,33 @@ def format_title_for_platform(
 
     else:
         return cleaned_title
+
+
+def format_title_compact(platform: str, title_data: Dict) -> str:
+    """紧凑模式标题格式化：仅渲染标题与链接，丢弃排名/次数/来源/时间等元数据
+
+    Args:
+        platform: 目标平台
+        title_data: 标题数据字典（与 format_title_for_platform 同源）
+
+    Returns:
+        紧凑格式的标题字符串
+    """
+    link_url = title_data.get("mobile_url") or title_data.get("url") or ""
+    cleaned_title = clean_title(title_data.get("title", ""))
+    if not cleaned_title:
+        cleaned_title = link_url
+
+    if platform in ("feishu", "dingtalk", "wework", "bark", "ntfy"):
+        return f"[{cleaned_title}]({link_url})" if link_url else cleaned_title
+    if platform == "slack":
+        return f"<{link_url}|{cleaned_title}>" if link_url else cleaned_title
+    if platform == "telegram":
+        if link_url:
+            return f'<a href="{html_escape(link_url)}">{html_escape(cleaned_title)}</a>'
+        return html_escape(cleaned_title)
+    if platform == "html":
+        if link_url:
+            return f'<a href="{html_escape(link_url)}" target="_blank">{html_escape(cleaned_title)}</a>'
+        return html_escape(cleaned_title)
+    return f"{cleaned_title} - {link_url}" if link_url else cleaned_title

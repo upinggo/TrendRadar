@@ -8,7 +8,7 @@
 from datetime import datetime
 from typing import Dict, List, Optional, Callable
 
-from trendradar.report.formatter import format_title_for_platform
+from trendradar.report.formatter import format_title_for_platform, format_title_compact
 from trendradar.report.helpers import format_rank_display
 from trendradar.utils.time import DEFAULT_TIMEZONE, format_iso_time_friendly, convert_time_for_display
 from trendradar.notification.batch import truncate_at_line_boundary
@@ -152,6 +152,7 @@ def split_content_into_batches(
     ai_stats: Optional[Dict] = None,
     report_type: str = "热点分析报告",
     show_new_section: bool = True,
+    compact: bool = False,
 ) -> List[str]:
     """分批处理消息内容，确保词组标题+至少第一条新闻的完整性（支持热榜+RSS合并+AI分析+独立展示区）
 
@@ -233,77 +234,78 @@ def split_content_into_batches(
     rss_source_success = max(0, rss_source_total - rss_source_failed)
 
     # === 上半部分：数据统计 ===
+    # 紧凑模式：跳过头部统计与元信息，仅保留正文
+    if not compact:
+        # 1. 总新闻
+        rss_new_count = sum(len(stat.get("titles", [])) for stat in (rss_new_items or []))
+        total_new = new_count + rss_new_count
+        total_news_line = f"{b_s}总新闻：{b_e} {total_titles} 条"
+        if total_new > 0:
+            total_news_line += f"（新增 {new_count} + {rss_new_count}）"
+        base_header += f"{total_news_line}\n"
 
-    # 1. 总新闻
-    rss_new_count = sum(len(stat.get("titles", [])) for stat in (rss_new_items or []))
-    total_new = new_count + rss_new_count
-    total_news_line = f"{b_s}总新闻：{b_e} {total_titles} 条"
-    if total_new > 0:
-        total_news_line += f"（新增 {new_count} + {rss_new_count}）"
-    base_header += f"{total_news_line}\n"
+        # 2. 热榜
+        hotlist_info = f"{b_s}热榜：{b_e} {total_hotlist_count}/{hotlist_total}"
+        if platform_total > 0:
+            hotlist_info += f"（平台 {platform_success}/{platform_total}）"
+        base_header += f"{hotlist_info}\n"
 
-    # 2. 热榜
-    hotlist_info = f"{b_s}热榜：{b_e} {total_hotlist_count}/{hotlist_total}"
-    if platform_total > 0:
-        hotlist_info += f"（平台 {platform_success}/{platform_total}）"
-    base_header += f"{hotlist_info}\n"
+        # 3. RSS
+        if rss_source_total > 0:
+            rss_info = f"{b_s}RSS：{b_e} {rss_matched}/{rss_total_items}（源 {rss_source_success}/{rss_source_total}）"
+            base_header += f"{rss_info}\n"
 
-    # 3. RSS
-    if rss_source_total > 0:
-        rss_info = f"{b_s}RSS：{b_e} {rss_matched}/{rss_total_items}（源 {rss_source_success}/{rss_source_total}）"
-        base_header += f"{rss_info}\n"
+        # 4. 独立展示区（仅在有数据时显示）
+        if standalone_data:
+            sa_platform_count = sum(len(p.get("items", [])) for p in standalone_data.get("platforms", []))
+            sa_rss_count = sum(len(f.get("items", [])) for f in standalone_data.get("rss_feeds", []))
+            sa_total = sa_platform_count + sa_rss_count
+            if sa_total > 0:
+                sa_parts = []
+                if sa_platform_count > 0:
+                    sa_parts.append(f"热榜 {sa_platform_count}")
+                if sa_rss_count > 0:
+                    sa_parts.append(f"RSS {sa_rss_count}")
+                base_header += f"{b_s}独立展示：{b_e} {sa_total} 条（{' + '.join(sa_parts)}）\n"
 
-    # 4. 独立展示区（仅在有数据时显示）
-    if standalone_data:
-        sa_platform_count = sum(len(p.get("items", [])) for p in standalone_data.get("platforms", []))
-        sa_rss_count = sum(len(f.get("items", [])) for f in standalone_data.get("rss_feeds", []))
-        sa_total = sa_platform_count + sa_rss_count
-        if sa_total > 0:
-            sa_parts = []
-            if sa_platform_count > 0:
-                sa_parts.append(f"热榜 {sa_platform_count}")
-            if sa_rss_count > 0:
-                sa_parts.append(f"RSS {sa_rss_count}")
-            base_header += f"{b_s}独立展示：{b_e} {sa_total} 条（{' + '.join(sa_parts)}）\n"
+        # 5. AI 分析（仅在有分析数据时显示）
+        standalone_analyzed = ai_stats.get("standalone_analyzed", 0) if ai_stats else 0
+        ai_has_data = ai_stats and (ai_stats.get("analyzed_news", 0) > 0 or standalone_analyzed > 0)
+        if ai_has_data:
+            hotlist_analyzed = ai_stats.get("hotlist_analyzed", 0)
+            rss_analyzed = ai_stats.get("rss_analyzed", 0)
+            ai_mode_val = ai_stats.get("ai_mode", "")
 
-    # 5. AI 分析（仅在有分析数据时显示）
-    standalone_analyzed = ai_stats.get("standalone_analyzed", 0) if ai_stats else 0
-    ai_has_data = ai_stats and (ai_stats.get("analyzed_news", 0) > 0 or standalone_analyzed > 0)
-    if ai_has_data:
-        hotlist_analyzed = ai_stats.get("hotlist_analyzed", 0)
-        rss_analyzed = ai_stats.get("rss_analyzed", 0)
-        ai_mode_val = ai_stats.get("ai_mode", "")
+            ai_parts = [str(hotlist_analyzed)]
+            if ai_stats.get("include_rss", True):
+                ai_parts.append(str(rss_analyzed))
+            if ai_stats.get("include_standalone", False):
+                ai_parts.append(str(standalone_analyzed))
+            ai_display = " + ".join(ai_parts) if sum(int(p) for p in ai_parts) > 0 else "0"
 
-        ai_parts = [str(hotlist_analyzed)]
-        if ai_stats.get("include_rss", True):
-            ai_parts.append(str(rss_analyzed))
-        if ai_stats.get("include_standalone", False):
-            ai_parts.append(str(standalone_analyzed))
-        ai_display = " + ".join(ai_parts) if sum(int(p) for p in ai_parts) > 0 else "0"
+            mode_suffix = ""
+            if ai_mode_val and ai_mode_val != mode:
+                mode_map = {"daily": "全天汇总", "current": "当前榜单", "incremental": "增量分析"}
+                mode_suffix = f" [{mode_map.get(ai_mode_val, ai_mode_val)}]"
 
-        mode_suffix = ""
-        if ai_mode_val and ai_mode_val != mode:
-            mode_map = {"daily": "全天汇总", "current": "当前榜单", "incremental": "增量分析"}
-            mode_suffix = f" [{mode_map.get(ai_mode_val, ai_mode_val)}]"
+            base_header += f"{b_s}AI 分析：{b_e} {ai_display}{mode_suffix}\n"
 
-        base_header += f"{b_s}AI 分析：{b_e} {ai_display}{mode_suffix}\n"
-
-    # === 空行分隔 ===
-    base_header += "\n"
-
-    # === 下半部分：元信息 ===
-    base_header += f"{b_s}类型：{b_e} {report_type}\n"
-    base_header += f"{b_s}时间：{b_e} {now.strftime('%Y-%m-%d %H:%M:%S')}\n"
-
-    top_words = report_data.get("stats", [])[:3]
-    if top_words:
-        topics = " | ".join(f"{s['word']}({s['count']})" for s in top_words)
-        base_header += f"{b_s}最热话题：{b_e} {topics}\n"
-
-    if format_type in ("feishu", "dingtalk"):
-        base_header += "\n---\n\n"
-    else:
+        # === 空行分隔 ===
         base_header += "\n"
+
+        # === 下半部分：元信息 ===
+        base_header += f"{b_s}类型：{b_e} {report_type}\n"
+        base_header += f"{b_s}时间：{b_e} {now.strftime('%Y-%m-%d %H:%M:%S')}\n"
+
+        top_words = report_data.get("stats", [])[:3]
+        if top_words:
+            topics = " | ".join(f"{s['word']}({s['count']})" for s in top_words)
+            base_header += f"{b_s}最热话题：{b_e} {topics}\n"
+
+        if format_type in ("feishu", "dingtalk"):
+            base_header += "\n---\n\n"
+        else:
+            base_header += "\n"
 
     base_footer = ""
     if format_type in ("wework", "bark"):
@@ -334,7 +336,7 @@ def split_content_into_batches(
     # 根据 display_mode 选择统计标题
     stats_title = "热点词汇统计" if display_mode == "keyword" else "热点新闻统计"
     stats_header = ""
-    if report_data["stats"]:
+    if report_data["stats"] and not compact:
         if format_type in ("wework", "bark"):
             stats_header = f"📊 **{stats_title}** (共 {total_hotlist_count} 条)\n\n"
         elif format_type == "telegram":
@@ -420,7 +422,9 @@ def split_content_into_batches(
 
             # 构建词组标题
             word_header = ""
-            if format_type in ("wework", "bark"):
+            if compact:
+                pass  # 紧凑模式不生成词组标题
+            elif format_type in ("wework", "bark"):
                 if count >= 10:
                     word_header = (
                         f"🔥 {sequence_display} **{word}** : **{count}** 条\n\n"
@@ -486,7 +490,9 @@ def split_content_into_batches(
             first_news_line = ""
             if stat["titles"]:
                 first_title_data = stat["titles"][0]
-                if format_type in ("wework", "bark"):
+                if compact:
+                    formatted_title = format_title_compact(format_type, first_title_data)
+                elif format_type in ("wework", "bark"):
                     formatted_title = format_title_for_platform(
                         "wework", first_title_data, show_source=show_source, show_keyword=show_keyword
                     )
@@ -513,9 +519,12 @@ def split_content_into_batches(
                 else:
                     formatted_title = f"{first_title_data['title']}"
 
-                first_news_line = f"  1. {formatted_title}\n"
-                if len(stat["titles"]) > 1:
-                    first_news_line += "\n"
+                if compact:
+                    first_news_line = f"{formatted_title}\n"
+                else:
+                    first_news_line = f"  1. {formatted_title}\n"
+                    if len(stat["titles"]) > 1:
+                        first_news_line += "\n"
 
             # 原子性检查：词组标题+第一条新闻必须一起处理
             word_with_first_news = word_header + first_news_line
@@ -541,7 +550,9 @@ def split_content_into_batches(
             # 处理剩余新闻条目
             for j in range(start_index, len(stat["titles"])):
                 title_data = stat["titles"][j]
-                if format_type in ("wework", "bark"):
+                if compact:
+                    formatted_title = format_title_compact(format_type, title_data)
+                elif format_type in ("wework", "bark"):
                     formatted_title = format_title_for_platform(
                         "wework", title_data, show_source=show_source, show_keyword=show_keyword
                     )
@@ -568,9 +579,12 @@ def split_content_into_batches(
                 else:
                     formatted_title = f"{title_data['title']}"
 
-                news_line = f"  {j + 1}. {formatted_title}\n"
-                if j < len(stat["titles"]) - 1:
-                    news_line += "\n"
+                if compact:
+                    news_line = f"{formatted_title}\n"
+                else:
+                    news_line = f"  {j + 1}. {formatted_title}\n"
+                    if j < len(stat["titles"]) - 1:
+                        news_line += "\n"
 
                 test_content = current_batch + news_line
                 if (
@@ -589,7 +603,7 @@ def split_content_into_batches(
                     current_batch_has_content = True
 
             # 词组间分隔符
-            if i < len(report_data["stats"]) - 1:
+            if i < len(report_data["stats"]) - 1 and not compact:
                 separator = ""
                 if format_type in ("wework", "bark"):
                     separator = f"\n\n\n\n"
