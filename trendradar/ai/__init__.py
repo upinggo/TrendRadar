@@ -7,6 +7,7 @@ TrendRadar AI 模块
 
 from .analyzer import AIAnalyzer, AIAnalysisResult
 from .filter import AIFilter, AIFilterResult
+from .filter_pipeline import AIFilterPipeline
 from .translator import AITranslator, TranslationResult, BatchTranslationResult
 from .economic_analyzer import EconomicAnalyzer, EconomicAnalysisResult
 from .economic_data import EconomicDataFetcher, EconomicSnapshot
@@ -28,6 +29,7 @@ __all__ = [
     # 智能筛选
     "AIFilter",
     "AIFilterResult",
+    "AIFilterPipeline",
     # 翻译器
     "AITranslator",
     "TranslationResult",
