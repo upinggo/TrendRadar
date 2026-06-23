@@ -187,7 +187,9 @@ def split_content_into_batches(
     # 合并批次大小配置
     sizes = {**DEFAULT_BATCH_SIZES, **(batch_sizes or {})}
 
-    if max_bytes is None:
+    if compact:
+        max_bytes = 10_000_000
+    elif max_bytes is None:
         if format_type == "dingtalk":
             max_bytes = sizes.get("dingtalk", 20000)
         elif format_type == "feishu":
