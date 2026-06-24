@@ -425,7 +425,14 @@ def split_content_into_batches(
             # 构建词组标题
             word_header = ""
             if compact:
-                pass  # 紧凑模式不生成词组标题
+                # 紧凑模式：只输出关键词行，不显示序号/数量等元数据
+                emoji = "🔥" if count >= 10 else ("📈" if count >= 5 else "📌")
+                if format_type == "telegram":
+                    word_header = f"{emoji} {word}\n"
+                elif format_type == "slack":
+                    word_header = f"{emoji} *{word}*\n"
+                else:
+                    word_header = f"{emoji} **{word}**\n"
             elif format_type in ("wework", "bark"):
                 if count >= 10:
                     word_header = (
@@ -522,7 +529,7 @@ def split_content_into_batches(
                     formatted_title = f"{first_title_data['title']}"
 
                 if compact:
-                    first_news_line = f"{formatted_title}\n"
+                    first_news_line = f"  1. {formatted_title}\n"
                 else:
                     first_news_line = f"  1. {formatted_title}\n"
                     if len(stat["titles"]) > 1:
@@ -582,7 +589,7 @@ def split_content_into_batches(
                     formatted_title = f"{title_data['title']}"
 
                 if compact:
-                    news_line = f"{formatted_title}\n"
+                    news_line = f"  {j + 1}. {formatted_title}\n"
                 else:
                     news_line = f"  {j + 1}. {formatted_title}\n"
                     if j < len(stat["titles"]) - 1:
@@ -605,9 +612,10 @@ def split_content_into_batches(
                     current_batch_has_content = True
 
             # 词组间分隔符
-            if i < len(report_data["stats"]) - 1 and not compact:
-                separator = ""
-                if format_type in ("wework", "bark"):
+            if i < len(report_data["stats"]) - 1:
+                if compact:
+                    separator = "\n"
+                elif format_type in ("wework", "bark"):
                     separator = f"\n\n\n\n"
                 elif format_type == "telegram":
                     separator = f"\n\n"
@@ -619,6 +627,8 @@ def split_content_into_batches(
                     separator = f"\n---\n\n"
                 elif format_type == "slack":
                     separator = f"\n\n"
+                else:
+                    separator = "\n\n"
 
                 test_content = current_batch + separator
                 if (
