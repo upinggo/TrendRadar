@@ -65,6 +65,19 @@ def _render_ai_analysis(ai_analysis: Any, channel: str) -> str:
         return ""
 
 
+def _render_economic_analysis(economic_analysis: Any, channel: str, verbosity: str = "full") -> str:
+    """渲染经济分析内容为指定渠道格式"""
+    if not economic_analysis:
+        return ""
+
+    try:
+        from trendradar.ai.formatter import get_economic_analysis_renderer
+        renderer = get_economic_analysis_renderer(channel)
+        return renderer(economic_analysis, verbosity=verbosity)
+    except Exception:
+        return ""
+
+
 # === SMTP 邮件配置 ===
 SMTP_CONFIGS = {
     # Gmail（使用 STARTTLS）
@@ -109,6 +122,7 @@ def send_to_feishu(
     rss_items: Optional[list] = None,
     rss_new_items: Optional[list] = None,
     ai_analysis: Any = None,
+    economic_analysis: Any = None,
     display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
     compact: bool = False,
@@ -145,6 +159,7 @@ def send_to_feishu(
     # 渲染 AI 分析内容并提取统计数据
     ai_content = _render_ai_analysis(ai_analysis, "feishu") if ai_analysis else None
     ai_stats = _extract_ai_stats(ai_analysis)
+    economic_content = _render_economic_analysis(economic_analysis, "feishu", "full") if economic_analysis else None
 
     # 预留批次头部空间，避免添加头部后超限
     header_reserve = get_max_batch_header_size("feishu")
@@ -157,6 +172,7 @@ def send_to_feishu(
         rss_items=rss_items,
         rss_new_items=rss_new_items,
         ai_content=ai_content,
+        economic_content=economic_content,
         standalone_data=standalone_data,
         ai_stats=ai_stats,
         report_type=report_type,
@@ -244,6 +260,7 @@ def send_to_dingtalk(
     rss_items: Optional[list] = None,
     rss_new_items: Optional[list] = None,
     ai_analysis: Any = None,
+    economic_analysis: Any = None,
     display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
     compact: bool = False,
@@ -279,6 +296,7 @@ def send_to_dingtalk(
     # 渲染 AI 分析内容并提取统计数据
     ai_content = _render_ai_analysis(ai_analysis, "dingtalk") if ai_analysis else None
     ai_stats = _extract_ai_stats(ai_analysis)
+    economic_content = _render_economic_analysis(economic_analysis, "dingtalk", "full") if economic_analysis else None
 
     # 预留批次头部空间，避免添加头部后超限
     header_reserve = get_max_batch_header_size("dingtalk")
@@ -291,6 +309,7 @@ def send_to_dingtalk(
         rss_items=rss_items,
         rss_new_items=rss_new_items,
         ai_content=ai_content,
+        economic_content=economic_content,
         standalone_data=standalone_data,
         ai_stats=ai_stats,
         report_type=report_type,
@@ -363,6 +382,7 @@ def send_to_wework(
     rss_items: Optional[list] = None,
     rss_new_items: Optional[list] = None,
     ai_analysis: Any = None,
+    economic_analysis: Any = None,
     display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
     compact: bool = False,
@@ -410,6 +430,7 @@ def send_to_wework(
     # 渲染 AI 分析内容并提取统计数据
     ai_content = _render_ai_analysis(ai_analysis, "wework") if ai_analysis else None
     ai_stats = _extract_ai_stats(ai_analysis)
+    economic_content = _render_economic_analysis(economic_analysis, "wework", "compact") if economic_analysis else None
 
     # 获取分批内容，预留批次头部空间
     header_reserve = get_max_batch_header_size(header_format_type)
@@ -418,6 +439,7 @@ def send_to_wework(
         rss_items=rss_items,
         rss_new_items=rss_new_items,
         ai_content=ai_content,
+        economic_content=economic_content,
         standalone_data=standalone_data,
         ai_stats=ai_stats,
         report_type=report_type,
@@ -492,6 +514,7 @@ def send_to_telegram(
     rss_items: Optional[list] = None,
     rss_new_items: Optional[list] = None,
     ai_analysis: Any = None,
+    economic_analysis: Any = None,
     display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
     compact: bool = False,
@@ -530,6 +553,7 @@ def send_to_telegram(
     # 渲染 AI 分析内容并提取统计数据
     ai_content = _render_ai_analysis(ai_analysis, "telegram") if ai_analysis else None
     ai_stats = _extract_ai_stats(ai_analysis)
+    economic_content = _render_economic_analysis(economic_analysis, "telegram", "compact") if economic_analysis else None
 
     # 获取分批内容，预留批次头部空间
     header_reserve = get_max_batch_header_size("telegram")
@@ -538,6 +562,7 @@ def send_to_telegram(
         rss_items=rss_items,
         rss_new_items=rss_new_items,
         ai_content=ai_content,
+        economic_content=economic_content,
         standalone_data=standalone_data,
         ai_stats=ai_stats,
         report_type=report_type,
@@ -768,6 +793,7 @@ def send_to_ntfy(
     rss_items: Optional[list] = None,
     rss_new_items: Optional[list] = None,
     ai_analysis: Any = None,
+    economic_analysis: Any = None,
     display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
     compact: bool = False,
@@ -829,6 +855,7 @@ def send_to_ntfy(
     # 渲染 AI 分析内容并提取统计数据
     ai_content = _render_ai_analysis(ai_analysis, "ntfy") if ai_analysis else None
     ai_stats = _extract_ai_stats(ai_analysis)
+    economic_content = _render_economic_analysis(economic_analysis, "ntfy", "compact") if economic_analysis else None
 
     # 获取分批内容，预留批次头部空间
     header_reserve = get_max_batch_header_size("ntfy")
@@ -837,6 +864,7 @@ def send_to_ntfy(
         rss_items=rss_items,
         rss_new_items=rss_new_items,
         ai_content=ai_content,
+        economic_content=economic_content,
         standalone_data=standalone_data,
         ai_stats=ai_stats,
         report_type=report_type,
@@ -960,6 +988,7 @@ def send_to_bark(
     rss_items: Optional[list] = None,
     rss_new_items: Optional[list] = None,
     ai_analysis: Any = None,
+    economic_analysis: Any = None,
     display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
     compact: bool = False,
@@ -1006,6 +1035,7 @@ def send_to_bark(
     # 渲染 AI 分析内容并提取统计数据
     ai_content = _render_ai_analysis(ai_analysis, "bark") if ai_analysis else None
     ai_stats = _extract_ai_stats(ai_analysis)
+    economic_content = _render_economic_analysis(economic_analysis, "bark", "compact") if economic_analysis else None
 
     # 获取分批内容，预留批次头部空间
     header_reserve = get_max_batch_header_size("bark")
@@ -1014,6 +1044,7 @@ def send_to_bark(
         rss_items=rss_items,
         rss_new_items=rss_new_items,
         ai_content=ai_content,
+        economic_content=economic_content,
         standalone_data=standalone_data,
         ai_stats=ai_stats,
         report_type=report_type,
@@ -1124,6 +1155,7 @@ def send_to_slack(
     rss_items: Optional[list] = None,
     rss_new_items: Optional[list] = None,
     ai_analysis: Any = None,
+    economic_analysis: Any = None,
     display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
     compact: bool = False,
@@ -1159,6 +1191,7 @@ def send_to_slack(
     # 渲染 AI 分析内容并提取统计数据
     ai_content = _render_ai_analysis(ai_analysis, "slack") if ai_analysis else None
     ai_stats = _extract_ai_stats(ai_analysis)
+    economic_content = _render_economic_analysis(economic_analysis, "slack", "compact") if economic_analysis else None
 
     # 获取分批内容，预留批次头部空间
     header_reserve = get_max_batch_header_size("slack")
@@ -1167,6 +1200,7 @@ def send_to_slack(
         rss_items=rss_items,
         rss_new_items=rss_new_items,
         ai_content=ai_content,
+        economic_content=economic_content,
         standalone_data=standalone_data,
         ai_stats=ai_stats,
         report_type=report_type,
@@ -1233,6 +1267,7 @@ def send_to_generic_webhook(
     rss_items: Optional[list] = None,
     rss_new_items: Optional[list] = None,
     ai_analysis: Any = None,
+    economic_analysis: Any = None,
     display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
     compact: bool = False,
@@ -1272,6 +1307,7 @@ def send_to_generic_webhook(
     # 渲染 AI 分析内容并提取统计数据（通用 Webhook 使用 markdown 格式）
     ai_content = _render_ai_analysis(ai_analysis, "wework") if ai_analysis else None
     ai_stats = _extract_ai_stats(ai_analysis)
+    economic_content = _render_economic_analysis(economic_analysis, "generic_webhook", "compact") if economic_analysis else None
 
     # 获取分批内容
     # 使用 'wework' 作为 format_type 以获取 markdown 格式的通用输出
@@ -1282,6 +1318,7 @@ def send_to_generic_webhook(
         rss_items=rss_items,
         rss_new_items=rss_new_items,
         ai_content=ai_content,
+        economic_content=economic_content,
         standalone_data=standalone_data,
         ai_stats=ai_stats,
         report_type=report_type,

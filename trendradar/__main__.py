@@ -10,7 +10,7 @@ import argparse
 import os
 import webbrowser
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from trendradar.context import AppContext
 from trendradar import __version__
@@ -921,7 +921,7 @@ class NewsAnalyzer:
                 translate_report_func=translate_report_func,
             )
 
-        return stats, html_file, ai_result, rss_items, standalone_data, rss_new_items
+        return stats, html_file, ai_result, rss_items, standalone_data, rss_new_items, economic_result
 
     def _send_notification_if_needed(
         self,
@@ -938,8 +938,9 @@ class NewsAnalyzer:
         ai_result: Optional[AIAnalysisResult] = None,
         current_results: Optional[Dict] = None,
         schedule: ResolvedSchedule = None,
+        economic_result: Any = None,
     ) -> bool:
-        """统一的通知发送逻辑，包含所有判断条件，支持热榜+RSS合并推送+AI分析+独立展示区"""
+        """统一的通知发送逻辑，包含所有判断条件，支持热榜+RSS合并推送+AI分析+经济分析+独立展示区"""
         has_notification = self._has_notification_configured()
         cfg = self.ctx.config
 
@@ -1019,6 +1020,7 @@ class NewsAnalyzer:
                 ai_analysis=ai_result,
                 standalone_data=standalone_data,
                 skip_translation=True,
+                economic_analysis=economic_result,
             )
 
             if not results:
@@ -1595,7 +1597,7 @@ class NewsAnalyzer:
                     all_results, historical_id_to_name, historical_title_info, raw_rss_items
                 )
 
-                stats, html_file, ai_result, rss_items, standalone_data, rss_new_items = self._run_analysis_pipeline(
+                stats, html_file, ai_result, rss_items, standalone_data, rss_new_items, economic_result = self._run_analysis_pipeline(
                     all_results,
                     self.report_mode,
                     historical_title_info,
@@ -1639,7 +1641,7 @@ class NewsAnalyzer:
                     all_results, historical_id_to_name, historical_title_info, raw_rss_items
                 )
 
-                stats, html_file, ai_result, rss_items, standalone_data, rss_new_items = self._run_analysis_pipeline(
+                stats, html_file, ai_result, rss_items, standalone_data, rss_new_items, economic_result = self._run_analysis_pipeline(
                     all_results,
                     self.report_mode,
                     historical_title_info,
@@ -1667,7 +1669,7 @@ class NewsAnalyzer:
                 standalone_data = self._prepare_standalone_data(
                     results, id_to_name, title_info, raw_rss_items
                 )
-                stats, html_file, ai_result, rss_items, standalone_data, rss_new_items = self._run_analysis_pipeline(
+                stats, html_file, ai_result, rss_items, standalone_data, rss_new_items, economic_result = self._run_analysis_pipeline(
                     results,
                     self.report_mode,
                     title_info,
@@ -1689,7 +1691,7 @@ class NewsAnalyzer:
             standalone_data = self._prepare_standalone_data(
                 results, id_to_name, title_info, raw_rss_items
             )
-            stats, html_file, ai_result, rss_items, standalone_data, rss_new_items = self._run_analysis_pipeline(
+            stats, html_file, ai_result, rss_items, standalone_data, rss_new_items, economic_result = self._run_analysis_pipeline(
                 results,
                 self.report_mode,
                 title_info,
@@ -1728,6 +1730,7 @@ class NewsAnalyzer:
                 ai_result=ai_result,
                 current_results=results,
                 schedule=schedule,
+                economic_result=economic_result,
             )
 
         # 打开浏览器（仅在非容器环境）

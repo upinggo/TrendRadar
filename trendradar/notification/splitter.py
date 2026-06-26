@@ -129,7 +129,7 @@ DEFAULT_BATCH_SIZES = {
 }
 
 # 默认区域顺序
-DEFAULT_REGION_ORDER = ["hotlist", "rss", "new_items", "standalone", "ai_analysis"]
+DEFAULT_REGION_ORDER = ["hotlist", "rss", "new_items", "standalone", "ai_analysis", "economic_analysis"]
 
 
 def split_content_into_batches(
@@ -147,6 +147,7 @@ def split_content_into_batches(
     timezone: str = DEFAULT_TIMEZONE,
     display_mode: str = "keyword",
     ai_content: Optional[str] = None,
+    economic_content: Optional[str] = None,
     standalone_data: Optional[Dict] = None,
     rank_threshold: int = 10,
     ai_stats: Optional[Dict] = None,
@@ -867,6 +868,55 @@ def split_content_into_batches(
 
         return current_batch, current_batch_has_content, batches
 
+    # 定义处理经济分析的函数
+    def process_economic_section(current_batch, current_batch_has_content, batches, add_separator=True):
+        """处理经济分析内容"""
+        nonlocal economic_content
+        if not economic_content:
+            return current_batch, current_batch_has_content, batches
+
+        econ_separator = ""
+        if add_separator and current_batch_has_content:
+            if format_type == "feishu":
+                econ_separator = f"\n{feishu_separator}\n\n"
+            elif format_type == "dingtalk":
+                econ_separator = "\n---\n\n"
+            elif format_type in ("wework", "bark"):
+                econ_separator = "\n\n\n\n"
+            elif format_type in ("telegram", "ntfy", "slack"):
+                econ_separator = "\n\n"
+
+        test_content = current_batch + econ_separator + economic_content
+        if (
+            len(test_content.encode("utf-8")) + len(base_footer.encode("utf-8"))
+            < max_bytes
+        ):
+            current_batch = test_content
+            current_batch_has_content = True
+        else:
+            if current_batch_has_content:
+                _safe_append_batch(batches, current_batch, base_footer, max_bytes, base_header)
+
+            footer_size = len(base_footer.encode("utf-8"))
+            header_size = len(base_header.encode("utf-8"))
+            available = max_bytes - footer_size - header_size
+
+            econ_lines = economic_content.split("\n")
+            current_batch = base_header
+            current_batch_has_content = False
+
+            for line in econ_lines:
+                test_line = line + "\n" if not line.endswith("\n") else line
+                test_content = current_batch + test_line
+                if len(test_content.encode("utf-8")) + footer_size >= max_bytes and current_batch_has_content:
+                    _safe_append_batch(batches, current_batch, base_footer, max_bytes, base_header)
+                    current_batch = base_header + test_line
+                else:
+                    current_batch = test_content
+                current_batch_has_content = True
+
+        return current_batch, current_batch_has_content, batches
+
     # 定义处理独立展示区的函数
     def process_standalone_section_wrapper(current_batch, current_batch_has_content, batches, add_separator=True):
         """处理独立展示区"""
@@ -947,6 +997,11 @@ def split_content_into_batches(
         elif region == "ai_analysis":
             # 处理 AI 分析
             current_batch, current_batch_has_content, batches = process_ai_section(
+                current_batch, current_batch_has_content, batches, add_separator
+            )
+        elif region == "economic_analysis":
+            # 处理经济分析
+            current_batch, current_batch_has_content, batches = process_economic_section(
                 current_batch, current_batch_has_content, batches, add_separator
             )
 

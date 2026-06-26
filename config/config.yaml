@@ -495,6 +495,19 @@ economic_analysis:
   request_timeout: 10               # 单次行情请求超时（秒）
   snapshot_retention_days: 30       # 历史快照保留天数（用于多周期变化对比）
 
+  # 各推送渠道是否包含经济分析（缺省即 true，邮件 HTML 始终包含）
+  # 在 Feishu/DingTalk 上以完整内容呈现（含配置逻辑与免责声明），
+  # 在 WeWork/Telegram/ntfy/Bark/Slack/通用Webhook 上以紧凑内容呈现以适配单条消息长度。
+  channels:
+    feishu: true
+    dingtalk: true
+    wework: true
+    telegram: true
+    ntfy: true
+    bark: true
+    slack: true
+    generic_webhook: true
+
 
 
 

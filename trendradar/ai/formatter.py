@@ -7,7 +7,7 @@ AI 分析结果格式化模块
 
 import html as html_lib
 import re
-from typing import Any, Dict
+from typing import Any, Dict, Literal
 from .analyzer import AIAnalysisResult
 from .economic_analyzer import EconomicAnalysisResult, ASSET_WHITELIST, PROFILES
 
@@ -757,3 +757,373 @@ def _render_snapshot_fallback(result: EconomicAnalysisResult) -> str:
     return f"""
                     <div class="ai-blocks-grid">{sections_html}
                     </div>{meta_html}"""
+
+
+# ============================================================
+# 推送渠道经济分析渲染器（飞书 / 钉钉 / 企业微信 / Telegram / ntfy / Bark / Slack / Generic Webhook）
+# ============================================================
+#
+# 设计要点：
+# 1. verbosity="full" 用于字节预算宽松的渠道（飞书、钉钉），渲染完整内容
+#    （三档配置 + 配置逻辑 + 元数据 + 免责声明）。
+# 2. verbosity="compact" 用于紧凑渠道（企业微信、Telegram、ntfy、Bark、Slack、
+#    Generic Webhook），仅保留核心信息：宏观研判 / 关键风险 / 配置表 + 快照时间。
+#    去掉配置逻辑与免责声明，控制单条消息字节占用。
+# 3. 错误/跳过路径只输出一行提示，不渲染兜底快照表（避免在紧凑渠道炸预算）。
+
+
+def _format_economic_allocation_table_markdown(result: EconomicAnalysisResult) -> str:
+    """渲染三档资产配置表为 Markdown 表格（飞书 / 钉钉 / 企业微信 / Slack / ntfy 通用）。
+
+    仅展示至少有一档非零的资产，行末百分比；同时输出合计行用于校验。
+    若无可见行，返回空字符串。
+    """
+    visible_assets = [
+        asset for asset in ASSET_WHITELIST
+        if any(result.allocations.get(p, {}).get(asset, 0) > 0 for p in PROFILES)
+    ]
+    if not visible_assets:
+        return ""
+
+    headers = ["资产"] + [_PROFILE_LABELS.get(p, p) for p in PROFILES]
+    header_line = "| " + " | ".join(headers) + " |"
+    sep_line = "| " + " | ".join(["---"] + [":---:"] * len(PROFILES)) + " |"
+
+    body_lines = []
+    for asset in visible_assets:
+        cells = [asset]
+        for p in PROFILES:
+            pct = result.allocations.get(p, {}).get(asset, 0)
+            cells.append(f"{pct}%" if pct > 0 else "—")
+        body_lines.append("| " + " | ".join(cells) + " |")
+
+    totals = ["合计"] + [f"{sum(result.allocations.get(p, {}).values())}%" for p in PROFILES]
+    body_lines.append("| " + " | ".join(totals) + " |")
+
+    return "\n".join([header_line, sep_line] + body_lines)
+
+
+def _format_economic_allocation_table_plain(result: EconomicAnalysisResult) -> str:
+    """渲染三档配置为对齐的纯文本表格（Telegram / Bark 用）。"""
+    visible_assets = [
+        asset for asset in ASSET_WHITELIST
+        if any(result.allocations.get(p, {}).get(asset, 0) > 0 for p in PROFILES)
+    ]
+    if not visible_assets:
+        return ""
+
+    headers = ["资产"] + [_PROFILE_LABELS.get(p, p) for p in PROFILES]
+    rows = [headers]
+    for asset in visible_assets:
+        row = [asset]
+        for p in PROFILES:
+            pct = result.allocations.get(p, {}).get(asset, 0)
+            row.append(f"{pct}%" if pct > 0 else "—")
+        rows.append(row)
+    rows.append(["合计"] + [f"{sum(result.allocations.get(p, {}).values())}%" for p in PROFILES])
+
+    # 计算每列最大显示宽度（中文按 2，其余按 1 估算）
+    def _w(s: str) -> int:
+        return sum(2 if ord(c) > 127 else 1 for c in s)
+
+    col_widths = [max(_w(row[i]) for row in rows) for i in range(len(headers))]
+
+    def _pad(s: str, width: int) -> str:
+        return s + " " * max(0, width - _w(s))
+
+    return "\n".join(
+        "  ".join(_pad(cell, col_widths[i]) for i, cell in enumerate(row))
+        for row in rows
+    )
+
+
+def _render_economic_markdown_like(
+    result: EconomicAnalysisResult,
+    verbosity: Literal["full", "compact"] = "full",
+) -> str:
+    """Markdown 系渠道（飞书 / 企业微信 / ntfy / Slack / Generic Webhook）的共享渲染骨架。
+
+    - verbosity="full"：保留三档配置 + 配置逻辑 + 元数据 + 免责声明
+    - verbosity="compact"：仅保留宏观研判 / 关键风险 / 配置表 + 快照时间
+    """
+    if not result:
+        return ""
+
+    if not result.success:
+        if result.skipped:
+            return f"ℹ️ {result.error}"
+        return f"⚠️ 经济分析失败: {result.error}"
+
+    lines = ["**📊 经济分析与资产配置**", ""]
+
+    if result.global_trends:
+        lines.extend(["**全球宏观研判**", _format_list_content(result.global_trends), ""])
+
+    if result.china_trends:
+        lines.extend(["**国内宏观研判**", _format_list_content(result.china_trends), ""])
+
+    if result.key_risks:
+        risks_text = "\n".join(f"• {r}" for r in result.key_risks if r)
+        if risks_text:
+            lines.extend(["**关键风险**", risks_text, ""])
+
+    if result.allocations:
+        table_md = _format_economic_allocation_table_markdown(result)
+        if table_md:
+            lines.extend(["**资产配置建议**", table_md, ""])
+
+    if verbosity == "full":
+        if result.allocation_rationale:
+            for profile in PROFILES:
+                rationale = result.allocation_rationale.get(profile, "")
+                if not rationale:
+                    continue
+                label = _PROFILE_LABELS.get(profile, profile)
+                lines.extend([f"**{label} · 配置逻辑**", _format_list_content(rationale), ""])
+
+        meta_lines = []
+        if result.snapshot_time:
+            meta_lines.append(f"快照时间: {result.snapshot_time}")
+        if result.sources_used:
+            meta_lines.append(f"数据源: {', '.join(result.sources_used)}")
+        if result.finance_news_count:
+            meta_lines.append(f"参考财经新闻: {result.finance_news_count} 条")
+        if meta_lines:
+            lines.append(" · ".join(meta_lines))
+        if result.disclaimer:
+            lines.append(result.disclaimer)
+    else:
+        # compact：仅保留快照时间
+        if result.snapshot_time:
+            lines.append(f"快照时间: {result.snapshot_time}")
+
+    return "\n".join(lines).rstrip()
+
+
+def render_economic_analysis_markdown(
+    result: EconomicAnalysisResult,
+    verbosity: Literal["full", "compact"] = "full",
+) -> str:
+    """渲染为通用 Markdown 格式（企业微信 / ntfy / Slack / Generic Webhook）"""
+    return _render_economic_markdown_like(result, verbosity=verbosity)
+
+
+def render_economic_analysis_feishu(
+    result: EconomicAnalysisResult,
+    verbosity: Literal["full", "compact"] = "full",
+) -> str:
+    """渲染为飞书卡片 2.0 markdown 格式
+
+    飞书卡片 markdown 基于 CommonMark，与企业微信渲染主体一致。
+    """
+    return _render_economic_markdown_like(result, verbosity=verbosity)
+
+
+def render_economic_analysis_dingtalk(
+    result: EconomicAnalysisResult,
+    verbosity: Literal["full", "compact"] = "full",
+) -> str:
+    """渲染为钉钉 Markdown 格式（### / #### 标题层级）"""
+    if not result:
+        return ""
+
+    if not result.success:
+        if result.skipped:
+            return f"ℹ️ {result.error}"
+        return f"⚠️ 经济分析失败: {result.error}"
+
+    lines = ["### 📊 经济分析与资产配置", ""]
+
+    if result.global_trends:
+        lines.extend(["#### 全球宏观研判", _format_list_content(result.global_trends), ""])
+
+    if result.china_trends:
+        lines.extend(["#### 国内宏观研判", _format_list_content(result.china_trends), ""])
+
+    if result.key_risks:
+        risks_text = "\n".join(f"- {r}" for r in result.key_risks if r)
+        if risks_text:
+            lines.extend(["#### 关键风险", risks_text, ""])
+
+    if result.allocations:
+        table_md = _format_economic_allocation_table_markdown(result)
+        if table_md:
+            lines.extend(["#### 资产配置建议", table_md, ""])
+
+    if verbosity == "full":
+        if result.allocation_rationale:
+            for profile in PROFILES:
+                rationale = result.allocation_rationale.get(profile, "")
+                if not rationale:
+                    continue
+                label = _PROFILE_LABELS.get(profile, profile)
+                lines.extend([f"#### {label} · 配置逻辑", _format_list_content(rationale), ""])
+
+        meta_lines = []
+        if result.snapshot_time:
+            meta_lines.append(f"快照时间: {result.snapshot_time}")
+        if result.sources_used:
+            meta_lines.append(f"数据源: {', '.join(result.sources_used)}")
+        if result.finance_news_count:
+            meta_lines.append(f"参考财经新闻: {result.finance_news_count} 条")
+        if meta_lines:
+            lines.append(" · ".join(meta_lines))
+        if result.disclaimer:
+            lines.append(result.disclaimer)
+    else:
+        if result.snapshot_time:
+            lines.append(f"快照时间: {result.snapshot_time}")
+
+    return "\n".join(lines).rstrip()
+
+
+def render_economic_analysis_telegram(
+    result: EconomicAnalysisResult,
+    verbosity: Literal["full", "compact"] = "full",
+) -> str:
+    """渲染为 Telegram HTML 格式（parse_mode: HTML）
+
+    Telegram HTML 模式仅支持有限标签：<b>, <i>, <code>, <pre>, <a>, <blockquote>。
+    不支持 <table>，配置表以 <pre> 包裹纯文本对齐表呈现。
+    """
+    if not result:
+        return ""
+
+    if not result.success:
+        if result.skipped:
+            return f"ℹ️ {_escape_html(result.error)}"
+        return f"⚠️ 经济分析失败: {_escape_html(result.error)}"
+
+    lines = ["<b>📊 经济分析与资产配置</b>", ""]
+
+    if result.global_trends:
+        lines.extend(
+            ["<b>全球宏观研判</b>", _escape_html(_format_list_content(result.global_trends)), ""]
+        )
+
+    if result.china_trends:
+        lines.extend(
+            ["<b>国内宏观研判</b>", _escape_html(_format_list_content(result.china_trends)), ""]
+        )
+
+    if result.key_risks:
+        risks_text = "\n".join(f"• {_escape_html(r)}" for r in result.key_risks if r)
+        if risks_text:
+            lines.extend(["<b>关键风险</b>", risks_text, ""])
+
+    if result.allocations:
+        table_plain = _format_economic_allocation_table_plain(result)
+        if table_plain:
+            lines.extend(
+                ["<b>资产配置建议</b>", f"<pre>{_escape_html(table_plain)}</pre>", ""]
+            )
+
+    if verbosity == "full":
+        if result.allocation_rationale:
+            for profile in PROFILES:
+                rationale = result.allocation_rationale.get(profile, "")
+                if not rationale:
+                    continue
+                label = _PROFILE_LABELS.get(profile, profile)
+                lines.extend(
+                    [
+                        f"<b>{_escape_html(label)} · 配置逻辑</b>",
+                        _escape_html(_format_list_content(rationale)),
+                        "",
+                    ]
+                )
+
+        meta_lines = []
+        if result.snapshot_time:
+            meta_lines.append(f"快照时间: {result.snapshot_time}")
+        if result.sources_used:
+            meta_lines.append(f"数据源: {', '.join(result.sources_used)}")
+        if result.finance_news_count:
+            meta_lines.append(f"参考财经新闻: {result.finance_news_count} 条")
+        if meta_lines:
+            lines.append(_escape_html(" · ".join(meta_lines)))
+        if result.disclaimer:
+            lines.append(_escape_html(result.disclaimer))
+    else:
+        if result.snapshot_time:
+            lines.append(_escape_html(f"快照时间: {result.snapshot_time}"))
+
+    return "\n".join(lines).rstrip()
+
+
+def render_economic_analysis_plain(
+    result: EconomicAnalysisResult,
+    verbosity: Literal["full", "compact"] = "full",
+) -> str:
+    """渲染为纯文本格式（Bark 等不支持 Markdown 的渠道）"""
+    if not result:
+        return ""
+
+    if not result.success:
+        if result.skipped:
+            return result.error
+        return f"经济分析失败: {result.error}"
+
+    lines = ["【📊 经济分析与资产配置】", ""]
+
+    if result.global_trends:
+        lines.extend(["[全球宏观研判]", _format_list_content(result.global_trends), ""])
+
+    if result.china_trends:
+        lines.extend(["[国内宏观研判]", _format_list_content(result.china_trends), ""])
+
+    if result.key_risks:
+        risks_text = "\n".join(f"• {r}" for r in result.key_risks if r)
+        if risks_text:
+            lines.extend(["[关键风险]", risks_text, ""])
+
+    if result.allocations:
+        table_plain = _format_economic_allocation_table_plain(result)
+        if table_plain:
+            lines.extend(["[资产配置建议]", table_plain, ""])
+
+    if verbosity == "full":
+        if result.allocation_rationale:
+            for profile in PROFILES:
+                rationale = result.allocation_rationale.get(profile, "")
+                if not rationale:
+                    continue
+                label = _PROFILE_LABELS.get(profile, profile)
+                lines.extend([f"[{label} · 配置逻辑]", _format_list_content(rationale), ""])
+
+        meta_lines = []
+        if result.snapshot_time:
+            meta_lines.append(f"快照时间: {result.snapshot_time}")
+        if result.sources_used:
+            meta_lines.append(f"数据源: {', '.join(result.sources_used)}")
+        if result.finance_news_count:
+            meta_lines.append(f"参考财经新闻: {result.finance_news_count} 条")
+        if meta_lines:
+            lines.append(" · ".join(meta_lines))
+        if result.disclaimer:
+            lines.append(result.disclaimer)
+    else:
+        if result.snapshot_time:
+            lines.append(f"快照时间: {result.snapshot_time}")
+
+    return "\n".join(lines).rstrip()
+
+
+def get_economic_analysis_renderer(channel: str):
+    """根据渠道获取经济分析渲染函数。
+
+    返回的渲染函数签名为 ``(result, verbosity="full") -> str``。
+    email 渠道沿用 HTML 报告嵌入路径（render_economic_analysis_html_rich），
+    此处不返回 email 渲染器；调用方应只为非 email 渠道调用本函数。
+    """
+    renderers = {
+        "feishu": render_economic_analysis_feishu,
+        "dingtalk": render_economic_analysis_dingtalk,
+        "wework": render_economic_analysis_markdown,
+        "telegram": render_economic_analysis_telegram,
+        "ntfy": render_economic_analysis_markdown,
+        "bark": render_economic_analysis_plain,
+        "slack": render_economic_analysis_markdown,
+        "generic_webhook": render_economic_analysis_markdown,
+    }
+    return renderers.get(channel, render_economic_analysis_markdown)

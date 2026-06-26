@@ -308,6 +308,20 @@ def _load_economic_analysis_config(config_data: Dict) -> Dict:
 
     enabled_env = _get_env_bool("ECONOMIC_ANALYSIS_ENABLED")
 
+    # 各推送渠道开关（默认全部开启；用户可单独禁用）
+    channels = econ.get("channels", {}) or {}
+    default_channels = {
+        "feishu": True,
+        "dingtalk": True,
+        "wework": True,
+        "telegram": True,
+        "ntfy": True,
+        "bark": True,
+        "slack": True,
+        "generic_webhook": True,
+    }
+    result_channels = {**default_channels, **{k: bool(v) for k, v in channels.items()}}
+
     return {
         "ENABLED": enabled_env if enabled_env is not None else econ.get("enabled", False),
         "LANGUAGE": econ.get("language", "Chinese"),
@@ -317,6 +331,7 @@ def _load_economic_analysis_config(config_data: Dict) -> Dict:
         "PROXY_URL": _get_env_str("ECONOMIC_PROXY_URL") or econ.get("proxy_url", ""),
         "REQUEST_TIMEOUT": float(econ.get("request_timeout", 10)),
         "SNAPSHOT_RETENTION_DAYS": int(econ.get("snapshot_retention_days", 30)),
+        "CHANNELS": result_channels,
     }
 
 
