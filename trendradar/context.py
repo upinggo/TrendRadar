@@ -415,6 +415,7 @@ class AppContext:
         rss_items: Optional[list] = None,
         rss_new_items: Optional[list] = None,
         ai_content: Optional[str] = None,
+        economic_content: Optional[str] = None,
         standalone_data: Optional[Dict] = None,
         ai_stats: Optional[Dict] = None,
         report_type: str = "热点分析报告",
@@ -431,6 +432,7 @@ class AppContext:
             rss_items: RSS 统计条目列表
             rss_new_items: RSS 新增条目列表
             ai_content: AI 分析内容（已渲染的字符串）
+            economic_content: 经济分析内容（已渲染的字符串）
             standalone_data: 独立展示区数据
             ai_stats: AI 分析统计数据
             report_type: 报告类型
@@ -458,6 +460,7 @@ class AppContext:
             timezone=self.config.get("TIMEZONE", DEFAULT_TIMEZONE),
             display_mode=self.display_mode,
             ai_content=ai_content,
+            economic_content=economic_content,
             standalone_data=standalone_data,
             rank_threshold=self.rank_threshold,
             ai_stats=ai_stats,
