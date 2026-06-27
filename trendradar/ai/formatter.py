@@ -904,8 +904,69 @@ def render_economic_analysis_markdown(
     result: EconomicAnalysisResult,
     verbosity: Literal["full", "compact"] = "full",
 ) -> str:
-    """渲染为通用 Markdown 格式（企业微信 / ntfy / Slack / Generic Webhook）"""
+    """渲染为通用 Markdown 格式（企业微信 / ntfy / Slack）"""
     return _render_economic_markdown_like(result, verbosity=verbosity)
+
+
+def render_economic_analysis_generic_webhook(
+    result: EconomicAnalysisResult,
+    verbosity: Literal["full", "compact"] = "full",
+) -> str:
+    """渲染为 Generic Webhook 格式（Server酱等不渲染 Markdown table 的渠道）。
+
+    资产配置表改用 code block 包裹的纯文本对齐表，避免 | 字符被当成普通文字输出。
+    """
+    if not result:
+        return ""
+
+    if not result.success:
+        if result.skipped:
+            return f"ℹ️ {result.error}"
+        return f"⚠️ 经济分析失败: {result.error}"
+
+    lines = ["**📊 经济分析与资产配置**", ""]
+
+    if result.global_trends:
+        lines.extend(["**全球宏观研判**", _format_list_content(result.global_trends), ""])
+
+    if result.china_trends:
+        lines.extend(["**国内宏观研判**", _format_list_content(result.china_trends), ""])
+
+    if result.key_risks:
+        risks_text = "\n".join(f"• {r}" for r in result.key_risks if r)
+        if risks_text:
+            lines.extend(["**关键风险**", risks_text, ""])
+
+    if result.allocations:
+        table_plain = _format_economic_allocation_table_plain(result)
+        if table_plain:
+            lines.extend(["**资产配置建议**", f"```\n{table_plain}\n```", ""])
+
+    if verbosity == "full":
+        if result.allocation_rationale:
+            for profile in PROFILES:
+                rationale = result.allocation_rationale.get(profile, "")
+                if not rationale:
+                    continue
+                label = _PROFILE_LABELS.get(profile, profile)
+                lines.extend([f"**{label} · 配置逻辑**", _format_list_content(rationale), ""])
+
+        meta_lines = []
+        if result.snapshot_time:
+            meta_lines.append(f"快照时间: {result.snapshot_time}")
+        if result.sources_used:
+            meta_lines.append(f"数据源: {', '.join(result.sources_used)}")
+        if result.finance_news_count:
+            meta_lines.append(f"参考财经新闻: {result.finance_news_count} 条")
+        if meta_lines:
+            lines.append(" · ".join(meta_lines))
+        if result.disclaimer:
+            lines.append(result.disclaimer)
+    else:
+        if result.snapshot_time:
+            lines.append(f"快照时间: {result.snapshot_time}")
+
+    return "\n".join(lines).rstrip()
 
 
 def render_economic_analysis_feishu(
@@ -1124,6 +1185,6 @@ def get_economic_analysis_renderer(channel: str):
         "ntfy": render_economic_analysis_markdown,
         "bark": render_economic_analysis_plain,
         "slack": render_economic_analysis_markdown,
-        "generic_webhook": render_economic_analysis_markdown,
+        "generic_webhook": render_economic_analysis_generic_webhook,
     }
     return renderers.get(channel, render_economic_analysis_markdown)
