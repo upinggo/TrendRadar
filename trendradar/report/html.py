@@ -8,7 +8,7 @@ HTML 报告渲染模块
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Callable
 
-from trendradar.report.helpers import html_escape, calculate_rank_trend
+from trendradar.report.helpers import html_escape, calculate_rank_trend, render_news_treemap_svg
 from trendradar.utils.time import convert_time_for_display
 from trendradar.ai.formatter import (
     render_ai_analysis_html_rich,
@@ -475,6 +475,67 @@ def render_html_content(
             /* 热榜统计区样式 */
             .hotlist-section {
                 /* 默认无边框，由 section-divider 动态添加 */
+            }
+
+            /* ===== Treemap 可视化 ===== */
+            .treemap-block {
+                margin: 0 0 20px 0;
+                padding: 16px;
+                background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+                border-radius: 12px;
+                border: 1px solid #e2e8f0;
+            }
+            .treemap-header {
+                display: flex;
+                align-items: baseline;
+                justify-content: space-between;
+                gap: 12px;
+                margin-bottom: 12px;
+                flex-wrap: wrap;
+            }
+            .treemap-title {
+                font-size: 15px;
+                font-weight: 600;
+                color: #1e293b;
+            }
+            .treemap-subtitle {
+                font-size: 12px;
+                color: #64748b;
+            }
+            .treemap-svg {
+                display: block;
+                width: 100%;
+                height: auto;
+                aspect-ratio: 560 / 320;
+                border-radius: 8px;
+                background: #ffffff;
+            }
+            .treemap-tile { transition: opacity 0.15s ease; cursor: default; }
+            .treemap-tile:hover { opacity: 0.85; }
+            .treemap-legend {
+                display: flex;
+                gap: 16px;
+                justify-content: center;
+                margin-top: 10px;
+                font-size: 12px;
+                color: #475569;
+                flex-wrap: wrap;
+            }
+            .treemap-legend-item {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+            }
+            .treemap-legend-swatch {
+                display: inline-block;
+                width: 10px;
+                height: 10px;
+                border-radius: 2px;
+            }
+            @media (max-width: 480px) {
+                .treemap-block { padding: 12px; }
+                .treemap-title { font-size: 14px; }
+                .treemap-subtitle { font-size: 11px; }
             }
 
             .new-section {
@@ -1242,6 +1303,16 @@ def render_html_content(
             body.dark-mode .feed-header { border-bottom-color: #166534; }
             body.dark-mode .tab-bar { border-bottom-color: #334155; }
 
+            /* Treemap 暗色模式 */
+            body.dark-mode .treemap-block {
+                background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+                border-color: #334155;
+            }
+            body.dark-mode .treemap-title { color: #f1f5f9; }
+            body.dark-mode .treemap-subtitle { color: #94a3b8; }
+            body.dark-mode .treemap-svg { background: #0f172a; }
+            body.dark-mode .treemap-legend { color: #cbd5e1; }
+
             /* 序号圆圈 */
             body.dark-mode .news-number,
             body.dark-mode .new-item-number {
@@ -1711,8 +1782,18 @@ def render_html_content(
 
     # 给热榜统计添加外层包装
     if stats_html:
+        # 顶部插入热点关键词 treemap（优先使用真实趋势提取，回退到 stats）
+        trending = report_data.get("trending_ngrams") or []
+        if trending:
+            news_treemap_html = render_news_treemap_svg(
+                trending,
+                title="🗺️ 全网热点关键词",
+                subtitle_prefix="按平台热度加权",
+            )
+        else:
+            news_treemap_html = render_news_treemap_svg(report_data.get("stats") or [])
         stats_html = f"""
-                <div class="hotlist-section">{tab_bar_html}{stats_html}
+                <div class="hotlist-section">{news_treemap_html}{tab_bar_html}{stats_html}
                 </div>"""
 
     # 生成新增新闻区域的HTML

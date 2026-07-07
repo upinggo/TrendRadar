@@ -406,12 +406,14 @@ def render_economic_analysis_html_rich(
         error_msg = result.error or "未知错误"
         fallback_html = _render_snapshot_fallback(result)
         if fallback_html:
+            treemap_html = render_economic_treemap_svg(result.snapshot_data or {})
             return f"""
                 <div class="ai-section">
                     <div class="ai-section-header">
                         <div class="ai-section-title">📊 经济分析与资产配置</div>
                         <span class="ai-section-badge">AI</span>
                     </div>
+                    {treemap_html}
                     <div class="ai-warning">AI 分析暂不可用: {_escape_html(str(error_msg))}（以下为原始行情兜底展示）</div>
                     {fallback_html}
                     {_render_macro_conclusion_block(macro_conclusion)}
@@ -431,7 +433,14 @@ def render_economic_analysis_html_rich(
                     <div class="ai-section-header">
                         <div class="ai-section-title">📊 经济分析与资产配置</div>
                         <span class="ai-section-badge">AI</span>
-                    </div>
+                    </div>"""
+
+    # 顶部：经济资产 treemap（涨跌热力图）
+    treemap_html = render_economic_treemap_svg(result.snapshot_data or {})
+    if treemap_html:
+        html += treemap_html
+
+    html += """
                     <div class="ai-blocks-grid">"""
 
     if result.global_trends:
@@ -677,6 +686,178 @@ def _render_snapshot_section_table(title: str, rows: Dict[str, Dict[str, Any]]) 
                             </table>
                         </div>
                     </div>"""
+
+
+# 经济 treemap：板块颜色（用于分组图例）
+_TREEMAP_GROUP_COLORS = {
+    "a_stock": ("A 股指数", "#2563eb"),
+    "a_stock_industry": ("A 股行业", "#7c3aed"),
+    "hk_stock": ("港股", "#0891b2"),
+    "us_stock": ("美股", "#0ea5e9"),
+    "commodities": ("商品", "#d97706"),
+    "fx": ("汇率", "#059669"),
+    "bonds": ("债券", "#64748b"),
+}
+
+
+def render_economic_treemap_svg(
+    snapshot_data: Dict[str, Any],
+    width: int = 560,
+    height: int = 320,
+) -> str:
+    """渲染经济快照数据为 inline SVG treemap。
+
+    每个资产为一个矩形，大小按 |change_pct| + 基础权重决定（避免平盘资产完全消失），
+    颜色按涨跌方向：绿色 (>0) / 红色 (<0) / 灰色 (~0)。
+
+    Args:
+        snapshot_data: EconomicAnalysisResult.snapshot_data，键为板块（a_stock 等），
+            值为 {asset_name: {price, prev_close, change_pct, ...}}
+        width, height: SVG viewBox 尺寸
+
+    Returns:
+        HTML 字符串（带 .treemap-block wrapper），无数据时返回空字符串。
+    """
+    if not snapshot_data:
+        return ""
+
+    # 延迟导入避免包顶层循环
+    from trendradar.report.helpers import _squarify
+
+    items = []  # (asset_name, group_label, change_pct, price, weight)
+    for group_key, (group_label, _) in _TREEMAP_GROUP_COLORS.items():
+        group = snapshot_data.get(group_key) or {}
+        if not isinstance(group, dict):
+            continue
+        for asset_name, d in group.items():
+            if not d or not isinstance(d, dict):
+                continue
+            price = d.get("price")
+            if price is None or price == "":
+                continue
+            change_pct_raw = d.get("change_pct")
+            try:
+                change_pct = float(change_pct_raw) if change_pct_raw is not None else 0.0
+            except (ValueError, TypeError):
+                change_pct = 0.0
+            # 权重：基础 0.5 + 幅度绝对值。确保平盘资产也可见。
+            weight = 0.5 + abs(change_pct)
+            items.append((asset_name, group_label, change_pct, price, weight))
+
+    if not items:
+        return ""
+
+    # 按权重降序（squarify 要求）
+    items.sort(key=lambda x: x[4], reverse=True)
+    values = [x[4] for x in items]
+    rects = _squarify(values, 0.0, 0.0, float(width), float(height))
+
+    tiles = ""
+    for (asset_name, group_label, change_pct, price, _), rect in zip(items, rects):
+        if rect["w"] < 0.5 or rect["h"] < 0.5:
+            continue
+
+        # 颜色：涨跌方向（深浅按幅度）
+        abs_pct = abs(change_pct)
+        if change_pct > 0.05:
+            # 绿色渐变：+2% 以上更深
+            if abs_pct >= 2.0:
+                fill = "#15803d"
+            elif abs_pct >= 1.0:
+                fill = "#16a34a"
+            else:
+                fill = "#22c55e"
+        elif change_pct < -0.05:
+            if abs_pct >= 2.0:
+                fill = "#b91c1c"
+            elif abs_pct >= 1.0:
+                fill = "#dc2626"
+            else:
+                fill = "#ef4444"
+        else:
+            fill = "#94a3b8"  # 平盘灰
+        text_color = "#ffffff"
+
+        # 价格格式化
+        try:
+            p_val = float(price)
+            if abs(p_val) >= 1000:
+                price_str = f"{p_val:,.2f}"
+            else:
+                price_str = f"{p_val:.4f}".rstrip("0").rstrip(".") or "0"
+        except (ValueError, TypeError):
+            price_str = str(price)
+
+        sign = "+" if change_pct >= 0 else ""
+        pct_str = f"{sign}{change_pct:.2f}%"
+        escaped_asset = _escape_html(asset_name)
+        escaped_group = _escape_html(group_label)
+
+        # 自适应字体大小
+        min_side = min(rect["w"], rect["h"])
+        area = rect["w"] * rect["h"]
+        font_size = max(9.0, min(17.0, (area ** 0.5) / 6.8))
+        show_label = min_side >= 30 and rect["w"] >= 42
+        show_pct = min_side >= 22
+
+        tiles += (
+            f'<g class="treemap-tile">'
+            f'<title>{escaped_asset} · {escaped_group} · {price_str} · {pct_str}</title>'
+            f'<rect x="{rect["x"]:.2f}" y="{rect["y"]:.2f}" '
+            f'width="{rect["w"]:.2f}" height="{rect["h"]:.2f}" '
+            f'fill="{fill}" stroke="#ffffff" stroke-width="2" rx="4" ry="4"/>'
+        )
+        if show_label:
+            label_y = rect["y"] + rect["h"] / 2 - (font_size * 0.15)
+            approx_char_w = font_size * 0.75  # 中文字符宽度略大
+            max_chars = max(1, int(rect["w"] / approx_char_w) - 1)
+            display_name = asset_name if len(asset_name) <= max_chars else (asset_name[: max(1, max_chars - 1)] + "…")
+            tiles += (
+                f'<text x="{rect["x"] + rect["w"] / 2:.2f}" y="{label_y:.2f}" '
+                f'text-anchor="middle" dominant-baseline="middle" '
+                f'fill="{text_color}" font-size="{font_size:.1f}" '
+                f'font-weight="600" style="pointer-events:none;">{_escape_html(display_name)}</text>'
+            )
+            if show_pct:
+                pct_size = max(8.0, font_size * 0.72)
+                tiles += (
+                    f'<text x="{rect["x"] + rect["w"] / 2:.2f}" y="{rect["y"] + rect["h"] / 2 + font_size:.2f}" '
+                    f'text-anchor="middle" dominant-baseline="middle" '
+                    f'fill="{text_color}" font-size="{pct_size:.1f}" '
+                    f'opacity="0.92" font-variant-numeric="tabular-nums" '
+                    f'style="pointer-events:none;">{pct_str}</text>'
+                )
+        elif show_pct:
+            tiles += (
+                f'<text x="{rect["x"] + rect["w"] / 2:.2f}" y="{rect["y"] + rect["h"] / 2:.2f}" '
+                f'text-anchor="middle" dominant-baseline="middle" '
+                f'fill="{text_color}" font-size="10" '
+                f'font-weight="600" font-variant-numeric="tabular-nums" '
+                f'style="pointer-events:none;">{pct_str}</text>'
+            )
+        tiles += "</g>"
+
+    # 图例：涨/跌/平
+    legend = (
+        '<div class="treemap-legend">'
+        '<span class="treemap-legend-item"><span class="treemap-legend-swatch" style="background:#16a34a;"></span>上涨</span>'
+        '<span class="treemap-legend-item"><span class="treemap-legend-swatch" style="background:#dc2626;"></span>下跌</span>'
+        '<span class="treemap-legend-item"><span class="treemap-legend-swatch" style="background:#94a3b8;"></span>平盘</span>'
+        '</div>'
+    )
+
+    return (
+        '<div class="treemap-block treemap-economic">'
+        '<div class="treemap-header">'
+        '<div class="treemap-title">🗺️ 资产热力图</div>'
+        f'<div class="treemap-subtitle">按涨跌幅度 · 共 {len(items)} 项资产</div>'
+        '</div>'
+        f'<svg class="treemap-svg" viewBox="0 0 {width} {height}" '
+        f'preserveAspectRatio="none" role="img" aria-label="Economic assets treemap">'
+        f'{tiles}</svg>'
+        f'{legend}'
+        '</div>'
+    )
 
 
 def _render_snapshot_fallback(result: EconomicAnalysisResult) -> str:

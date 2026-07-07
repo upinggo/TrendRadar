@@ -293,6 +293,7 @@ class AppContext:
         id_to_name: Optional[Dict] = None,
         mode: str = "daily",
         frequency_file: Optional[str] = None,
+        raw_results: Optional[Dict] = None,
     ) -> Dict:
         """准备报告数据"""
         return prepare_report_data(
@@ -303,6 +304,7 @@ class AppContext:
             mode=mode,
             rank_threshold=self.rank_threshold,
             show_new_section=self.show_new_section,
+            raw_results=raw_results,
         )
 
     def generate_html(
@@ -322,6 +324,7 @@ class AppContext:
         frequency_file: Optional[str] = None,
         report_metadata: Optional[Dict] = None,
         translate_report_func: Optional[Any] = None,
+        raw_results: Optional[Dict] = None,
     ) -> str:
         """生成HTML报告"""
         return generate_html_report(
@@ -339,6 +342,7 @@ class AppContext:
             render_html_func=lambda *args, **kwargs: self.render_html(*args, rss_items=rss_items, rss_new_items=rss_new_items, ai_analysis=ai_analysis, economic_analysis=economic_analysis, standalone_data=standalone_data, **kwargs),
             report_metadata=report_metadata,
             translate_report_func=translate_report_func,
+            raw_results=raw_results,
         )
 
     def render_html(
