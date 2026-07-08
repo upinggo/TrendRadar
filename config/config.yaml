@@ -283,6 +283,11 @@ notification:
   enabled: true                       # 是否启用通知功能（true=启用, false=关闭）—— 总开关
                                       # 开启 schedule 后此项仍为总开关：false=永远不推送，true=由调度控制
 
+  # Treemap 图片推送：将 HTML 报告中的 treemap 光栅化为 PNG 并推送到支持的渠道
+  # 需要安装可选依赖：pip install 'trendradar[image]'（含 cairosvg，需 libcairo 系统库）
+  # 缺失依赖时自动降级为纯文本推送，只打印一次警告，不阻塞通知。
+  treemap_image_types: "both"         # both | news | economic —— 生成哪些 treemap（当任一渠道启用时生效）
+
   # 推送渠道配置
   #
   # 每个渠道可独立设置 format（推送格式）：
@@ -302,11 +307,13 @@ notification:
       webhook_url: ""                 # 企业微信机器人 webhook URL
       msg_type: "markdown"            # 消息类型：markdown(群机器人) | text(个人微信应用)
       format: "default"               # default | compact
+      treemap_image: false            # 是否在文本消息之后追加 treemap 图片（PNG），需安装 trendradar[image]
 
     telegram:
       bot_token: ""                   # Telegram Bot Token
       chat_id: ""                     # Telegram Chat ID
       format: "default"               # default | compact
+      treemap_image: false            # 是否在文本消息之后追加 treemap 图片（sendPhoto），需安装 trendradar[image]
 
     email:
       from: ""                        # 发件人邮箱地址
@@ -314,12 +321,14 @@ notification:
       to: ""                          # 收件人邮箱，多个用逗号分隔
       smtp_server: ""                 # SMTP 服务器（可选，留空自动识别）
       smtp_port: ""                   # SMTP 端口（可选，留空自动识别）
+      treemap_image: false            # 是否将 treemap PNG 作为内嵌 <img cid:...> 附加到邮件正文，需安装 trendradar[image]
 
     ntfy:
       server_url: "https://ntfy.sh"   # ntfy 服务器地址（可改为自托管）
       topic: ""                       # ntfy 主题名称
       token: ""                       # ntfy 访问令牌（可选，用于私有主题）
       format: "default"               # default | compact
+      treemap_image: false            # 是否在文本消息之后追加 treemap 图片（PUT 上传 PNG），需安装 trendradar[image]
 
     bark:
       url: ""                         # Bark 推送 URL（格式：https://api.day.app/your_device_key）

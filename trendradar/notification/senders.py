@@ -15,11 +15,15 @@
 每个发送函数都支持分批发送，并通过参数化配置实现与 CONFIG 的解耦。
 """
 
+import base64
+import hashlib
+import html as html_mod
 import smtplib
 import time
 import json
 from datetime import datetime
 from email.header import Header
+from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formataddr, formatdate, make_msgid
@@ -104,6 +108,33 @@ SMTP_CONFIGS = {
     # iCloud邮箱（使用 SSL）
     "icloud.com": {"server": "smtp.mail.me.com", "port": 587, "encryption": "SSL"},
 }
+
+
+def _push_wework_image(
+    webhook_url: str,
+    png_bytes: bytes,
+    headers: Dict,
+    proxies: Optional[Dict],
+    log_prefix: str,
+    report_type: str,
+) -> bool:
+    """向企业微信 webhook 推送一张 PNG 图片消息（msgtype: image）。"""
+    b64 = base64.b64encode(png_bytes).decode("ascii")
+    md5 = hashlib.md5(png_bytes).hexdigest()
+    payload = {"msgtype": "image", "image": {"base64": b64, "md5": md5}}
+    try:
+        response = requests.post(
+            webhook_url, headers=headers, json=payload, proxies=proxies, timeout=30
+        )
+        if response.status_code == 200 and response.json().get("errcode") == 0:
+            print(f"{log_prefix}图片消息发送成功 [{report_type}]，{len(png_bytes)} 字节")
+            return True
+        print(
+            f"{log_prefix}图片消息发送失败 [{report_type}]：{response.status_code} {response.text[:200]}"
+        )
+    except Exception as e:
+        print(f"{log_prefix}图片消息发送出错 [{report_type}]：{e}")
+    return False
 
 
 def send_to_feishu(
@@ -386,6 +417,7 @@ def send_to_wework(
     display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
     compact: bool = False,
+    treemap_pngs: Optional[Dict[str, bytes]] = None,
 ) -> bool:
     """
     发送到企业微信（支持分批发送，支持 markdown 和 text 两种格式，支持热榜+RSS合并+独立展示区）
@@ -495,6 +527,14 @@ def send_to_wework(
 
     print(f"{log_prefix}所有 {len(batches)} 批次发送完成 [{report_type}]")
 
+    # treemap 图片消息（可选）：在文本批次全部发送成功之后追加
+    if treemap_pngs:
+        for name, png_bytes in treemap_pngs.items():
+            time.sleep(batch_interval)
+            _push_wework_image(
+                webhook_url, png_bytes, headers, proxies, log_prefix, f"{report_type}-{name}"
+            )
+
     return True
 
 
@@ -518,6 +558,7 @@ def send_to_telegram(
     display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
     compact: bool = False,
+    treemap_pngs: Optional[Dict[str, bytes]] = None,
 ) -> bool:
     """
     发送到 Telegram（支持分批发送，支持热榜+RSS合并+独立展示区）
@@ -615,6 +656,34 @@ def send_to_telegram(
 
     print(f"{log_prefix}所有 {len(batches)} 批次发送完成 [{report_type}]")
 
+    # treemap 图片消息（可选）：文本批次完成后逐张发送
+    if treemap_pngs:
+        photo_url = f"https://api.telegram.org/bot{bot_token}/sendPhoto"
+        for name, png_bytes in treemap_pngs.items():
+            time.sleep(batch_interval)
+            from .treemap_image import caption_for
+            caption = html_mod.escape(caption_for(name, report_type))
+            try:
+                resp = requests.post(
+                    photo_url,
+                    data={
+                        "chat_id": chat_id,
+                        "caption": caption,
+                        "parse_mode": "HTML",
+                    },
+                    files={"photo": (f"{name}.png", png_bytes, "image/png")},
+                    proxies=proxies,
+                    timeout=60,
+                )
+                if resp.status_code == 200 and resp.json().get("ok"):
+                    print(f"{log_prefix}图片消息发送成功 [{report_type}-{name}]")
+                else:
+                    print(
+                        f"{log_prefix}图片消息发送失败 [{report_type}-{name}]：{resp.status_code} {resp.text[:200]}"
+                    )
+            except Exception as e:
+                print(f"{log_prefix}图片消息发送出错 [{report_type}-{name}]：{e}")
+
     return True
 
 
@@ -628,6 +697,7 @@ def send_to_email(
     custom_smtp_port: Optional[int] = None,
     *,
     get_time_func: Callable = None,
+    treemap_pngs: Optional[Dict[str, bytes]] = None,
 ) -> bool:
     """
     发送邮件通知
@@ -683,7 +753,17 @@ def send_to_email(
             smtp_port = 587
             use_tls = True
 
-        msg = MIMEMultipart("alternative")
+        # 有 treemap 图片时使用 multipart/related 包裹 multipart/alternative，
+        # 便于 HTML 中通过 cid: 引用内嵌图片；无图片时保持原有结构，零回归风险
+        if treemap_pngs:
+            root = MIMEMultipart("related")
+            alt = MIMEMultipart("alternative")
+            root.attach(alt)
+            msg = root
+            body_container = alt
+        else:
+            msg = MIMEMultipart("alternative")
+            body_container = msg
 
         # 严格按照 RFC 标准设置 From header
         sender_name = "TrendRadar"
@@ -716,10 +796,32 @@ TrendRadar 热点分析报告
 请使用支持HTML的邮件客户端查看完整报告内容。
         """
         text_part = MIMEText(text_content, "plain", "utf-8")
-        msg.attach(text_part)
+        body_container.attach(text_part)
+
+        # 有图片时在 HTML body 追加 <img cid:...> 段
+        if treemap_pngs:
+            img_tags = "".join(
+                f'<div style="margin:12px 0;"><img src="cid:treemap_{n}" '
+                f'style="max-width:100%;height:auto;border-radius:8px;" '
+                f'alt="{n} treemap"/></div>'
+                for n in treemap_pngs
+            )
+            img_block = f'<div style="margin:20px 0;">{img_tags}</div>'
+            if "</body>" in html_content:
+                html_content = html_content.replace("</body>", img_block + "</body>", 1)
+            else:
+                html_content = html_content + img_block
 
         html_part = MIMEText(html_content, "html", "utf-8")
-        msg.attach(html_part)
+        body_container.attach(html_part)
+
+        # 内嵌图片附件（Content-ID 与 HTML 中的 cid: 引用一致）
+        if treemap_pngs:
+            for name, png_bytes in treemap_pngs.items():
+                img = MIMEImage(png_bytes, _subtype="png")
+                img.add_header("Content-ID", f"<treemap_{name}>")
+                img.add_header("Content-Disposition", "inline", filename=f"treemap_{name}.png")
+                msg.attach(img)
 
         print(f"正在发送邮件到 {to_email}...")
         print(f"SMTP 服务器: {smtp_server}:{smtp_port}")
@@ -797,6 +899,7 @@ def send_to_ntfy(
     display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
     compact: bool = False,
+    treemap_pngs: Optional[Dict[str, bytes]] = None,
 ) -> bool:
     """
     发送到 ntfy（支持分批发送，严格遵守4KB限制，支持热榜+RSS合并+独立展示区）
@@ -969,6 +1072,44 @@ def send_to_ntfy(
     else:
         print(f"{log_prefix}发送完全失败 [{report_type}]")
         return False
+
+    # treemap 图片消息（可选）：文本批次完成后 PUT 上传 PNG 附件
+    if treemap_pngs:
+        from .treemap_image import caption_for
+        interval = 2 if "ntfy.sh" in server_url else 1
+        for name, png_bytes in treemap_pngs.items():
+            time.sleep(interval)
+            caption = caption_for(name, report_type)
+            # ntfy 的 Title header 必须是 latin-1 可编码；含中文时用 RFC2047 Base64 编码
+            try:
+                caption.encode("latin-1")
+                title_header = caption
+            except UnicodeEncodeError:
+                title_header = f"=?utf-8?B?{base64.b64encode(caption.encode('utf-8')).decode('ascii')}?="
+            put_headers = {
+                "Content-Type": "image/png",
+                "Filename": f"{name}.png",
+                "Title": title_header,
+                "Tags": "chart",
+            }
+            if token:
+                put_headers["Authorization"] = f"Bearer {token}"
+            try:
+                resp = requests.put(
+                    url,
+                    headers=put_headers,
+                    data=png_bytes,
+                    proxies=proxies,
+                    timeout=60,
+                )
+                if resp.status_code == 200:
+                    print(f"{log_prefix}图片消息发送成功 [{report_type}-{name}]，{len(png_bytes)} 字节")
+                else:
+                    print(
+                        f"{log_prefix}图片消息发送失败 [{report_type}-{name}]：{resp.status_code} {resp.text[:200]}"
+                    )
+            except Exception as e:
+                print(f"{log_prefix}图片消息发送出错 [{report_type}-{name}]：{e}")
 
     return True
 

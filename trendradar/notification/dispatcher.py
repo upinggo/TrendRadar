@@ -299,6 +299,22 @@ class NotificationDispatcher:
                 skip_rss=True, skip_standalone=True,
             )
 
+        # Treemap 图片：任一支持通道启用时预生成一次，全部通道共享
+        treemap_pngs: Dict[str, bytes] = {}
+        if any(
+            self.config.get(f"{c}_TREEMAP_IMAGE")
+            for c in ("TELEGRAM", "EMAIL", "WEWORK", "NTFY")
+        ):
+            try:
+                from trendradar.notification.treemap_image import render_treemap_pngs
+                treemap_pngs = render_treemap_pngs(
+                    report_data,
+                    economic_analysis,
+                    self.config.get("TREEMAP_IMAGE_TYPES", "both"),
+                )
+            except Exception as e:
+                print(f"[treemap] render failed: {e}")
+
         # 飞书
         if self.config.get("FEISHU_WEBHOOK_URL"):
             results["feishu"] = self._send_feishu(
@@ -317,21 +333,24 @@ class NotificationDispatcher:
         if self.config.get("WEWORK_WEBHOOK_URL"):
             results["wework"] = self._send_wework(
                 report_data, report_type, update_info, proxy_url, mode, rss_items, rss_new_items,
-                ai_analysis, display_regions, standalone_data, economic_analysis
+                ai_analysis, display_regions, standalone_data, economic_analysis,
+                treemap_pngs=treemap_pngs if self.config.get("WEWORK_TREEMAP_IMAGE") else None,
             )
 
         # Telegram（需要配对验证）
         if self.config.get("TELEGRAM_BOT_TOKEN") and self.config.get("TELEGRAM_CHAT_ID"):
             results["telegram"] = self._send_telegram(
                 report_data, report_type, update_info, proxy_url, mode, rss_items, rss_new_items,
-                ai_analysis, display_regions, standalone_data, economic_analysis
+                ai_analysis, display_regions, standalone_data, economic_analysis,
+                treemap_pngs=treemap_pngs if self.config.get("TELEGRAM_TREEMAP_IMAGE") else None,
             )
 
         # ntfy（需要配对验证）
         if self.config.get("NTFY_SERVER_URL") and self.config.get("NTFY_TOPIC"):
             results["ntfy"] = self._send_ntfy(
                 report_data, report_type, update_info, proxy_url, mode, rss_items, rss_new_items,
-                ai_analysis, display_regions, standalone_data, economic_analysis
+                ai_analysis, display_regions, standalone_data, economic_analysis,
+                treemap_pngs=treemap_pngs if self.config.get("NTFY_TREEMAP_IMAGE") else None,
             )
 
         # Bark
@@ -361,7 +380,11 @@ class NotificationDispatcher:
             and self.config.get("EMAIL_PASSWORD")
             and self.config.get("EMAIL_TO")
         ):
-            results["email"] = self._send_email(report_type, html_file_path)
+            results["email"] = self._send_email(
+                report_type,
+                html_file_path,
+                treemap_pngs=treemap_pngs if self.config.get("EMAIL_TREEMAP_IMAGE") else None,
+            )
 
         return results
 
@@ -555,6 +578,7 @@ class NotificationDispatcher:
         display_regions: Optional[Dict] = None,
         standalone_data: Optional[Dict] = None,
         economic_analysis: Optional["EconomicAnalysisResult"] = None,
+        treemap_pngs: Optional[Dict[str, bytes]] = None,
     ) -> bool:
         """发送到企业微信（多账号，支持热榜+RSS合并+AI分析+经济分析+独立展示区）"""
         compact = self._channel_format("WEWORK") == "compact"
@@ -586,6 +610,7 @@ class NotificationDispatcher:
                 display_regions=effective_regions or {},
                 standalone_data=sd,
                 compact=compact,
+                treemap_pngs=treemap_pngs,
             ),
         )
 
@@ -602,6 +627,7 @@ class NotificationDispatcher:
         display_regions: Optional[Dict] = None,
         standalone_data: Optional[Dict] = None,
         economic_analysis: Optional["EconomicAnalysisResult"] = None,
+        treemap_pngs: Optional[Dict[str, bytes]] = None,
     ) -> bool:
         """发送到 Telegram（多账号，需验证 token 和 chat_id 配对，支持热榜+RSS合并+AI分析+经济分析+独立展示区）"""
         compact = self._channel_format("TELEGRAM") == "compact"
@@ -654,6 +680,7 @@ class NotificationDispatcher:
                     display_regions=display_regions,
                     standalone_data=standalone_data,
                     compact=compact,
+                    treemap_pngs=treemap_pngs,
                 )
                 results.append(result)
 
@@ -672,6 +699,7 @@ class NotificationDispatcher:
         display_regions: Optional[Dict] = None,
         standalone_data: Optional[Dict] = None,
         economic_analysis: Optional["EconomicAnalysisResult"] = None,
+        treemap_pngs: Optional[Dict[str, bytes]] = None,
     ) -> bool:
         """发送到 ntfy（多账号，需验证 topic 和 token 配对，支持热榜+RSS合并+AI分析+经济分析+独立展示区）"""
         compact = self._channel_format("NTFY") == "compact"
@@ -723,6 +751,7 @@ class NotificationDispatcher:
                     display_regions=display_regions,
                     standalone_data=standalone_data,
                     compact=compact,
+                    treemap_pngs=treemap_pngs,
                 )
                 results.append(result)
 
@@ -893,6 +922,7 @@ class NotificationDispatcher:
         self,
         report_type: str,
         html_file_path: Optional[str],
+        treemap_pngs: Optional[Dict[str, bytes]] = None,
     ) -> bool:
         """发送邮件（保持原有逻辑，已支持多收件人）
 
@@ -908,5 +938,6 @@ class NotificationDispatcher:
             custom_smtp_server=self.config.get("EMAIL_SMTP_SERVER", ""),
             custom_smtp_port=self.config.get("EMAIL_SMTP_PORT", ""),
             get_time_func=self.get_time_func,
+            treemap_pngs=treemap_pngs,
         )
 
