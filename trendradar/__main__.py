@@ -919,6 +919,7 @@ class NewsAnalyzer:
                     "rss_source_failed": self._rss_source_failed,
                 },
                 translate_report_func=translate_report_func,
+                raw_results=data_source,
             )
 
         return stats, html_file, ai_result, rss_items, standalone_data, rss_new_items, economic_result

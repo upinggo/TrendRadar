@@ -10,6 +10,8 @@
 from pathlib import Path
 from typing import Dict, List, Optional, Callable
 
+from trendradar.report.helpers import extract_trending_ngrams
+
 
 def prepare_report_data(
     stats: List[Dict],
@@ -19,6 +21,7 @@ def prepare_report_data(
     mode: str = "daily",
     rank_threshold: int = 3,
     show_new_section: bool = True,
+    raw_results: Optional[Dict] = None,
 ) -> Dict:
     """
     准备报告数据
@@ -131,11 +134,20 @@ def prepare_report_data(
     # total_new_count 始终从过滤结果计算（用于头部统计），不受 hide_new_section 影响
     total_new_count = sum(len(titles) for titles in filtered_new_titles.values())
 
+    # 从原始抓取结果提取真实热点 n-gram（不依赖用户关键词配置）
+    trending_ngrams = []
+    if raw_results:
+        try:
+            trending_ngrams = extract_trending_ngrams(raw_results, top_n=20)
+        except Exception:
+            trending_ngrams = []
+
     return {
         "stats": processed_stats,
         "new_titles": processed_new_titles,
         "failed_ids": failed_ids or [],
         "total_new_count": total_new_count,
+        "trending_ngrams": trending_ngrams,
     }
 
 
@@ -154,6 +166,7 @@ def generate_html_report(
     render_html_func: Optional[Callable] = None,
     report_metadata: Optional[Dict] = None,
     translate_report_func: Optional[Callable] = None,
+    raw_results: Optional[Dict] = None,
 ) -> str:
     """
     生成 HTML 报告
@@ -196,6 +209,7 @@ def generate_html_report(
         id_to_name,
         mode,
         rank_threshold,
+        raw_results=raw_results,
     )
 
     # 翻译热榜 report_data（stats/new_titles）——在 prepare_report_data 过滤之后翻译，

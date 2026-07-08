@@ -6,6 +6,8 @@
 
 最快<strong>30秒</strong>部署的热点助手 —— 告别无效刷屏，只看真正关心的新闻资讯
 
+<a href="https://trendradar.sandev.cc/zh/" title="TrendRadar 官方网站"><strong>🌐 官方网站</strong></a> · <a href="https://trendradar.sandev.cc/zh/docs/quick-start/" title="TrendRadar 官网文档"><strong>📖 官网文档</strong></a>
+
 <a href="https://trendshift.io/repositories/14726" target="_blank"><img src="https://trendshift.io/api/badge/repositories/14726" alt="sansan0%2FTrendRadar | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 
 
@@ -246,6 +248,12 @@
 > **📌 查看最新更新**：**[原仓库更新日志](https://github.com/sansan0/TrendRadar?tab=readme-ov-file#-更新日志)** ：
 - **提示**：建议查看【历史更新】，明确具体的【功能内容】
 
+
+### 2026/07/07 - fork 增强
+
+- **经济资产 treemap 可视化**：HTML 报告经济分析板块新增涨跌热力图，按 |涨跌幅| 加权面积，红涨绿跌一目了然，平盘资产也保底可见
+- **全平台热点关键词 treemap**：新增 `extract_trending_ngrams`，从所有原始标题中按平台排名加权提取 2–4 字热门 n-gram，内置中文停用词与"同题碎片/滑窗子串"去重，不依赖用户预设关键词就能反映当日全网真正热度
+- **Squarified treemap 布局**：自研 `_squarify` 算法（Bruls et al.）生成宽高比更均衡的矩形，自适应字号/截断，小格自动隐藏文字
 
 ### 2026/06/19 - v6.10.0
 
