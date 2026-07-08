@@ -1,0 +1,132 @@
+name: Sync upstream
+
+on:
+  schedule:
+    # every 6 hours, offset to :17 to avoid the top-of-hour rush
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: false
+
+env:
+  UPSTREAM_REPO: sansan0/TrendRadar
+  UPSTREAM_BRANCH: master
+  FORK_BRANCH: master
+  SYNC_BRANCH: upstream-sync
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout fork (with full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ env.FORK_BRANCH }}
+          # Use PAT if available so subsequent pushes can trigger workflows;
+          # falls back to GITHUB_TOKEN otherwise. GITHUB_TOKEN pushes will
+          # NOT trigger downstream workflows (e.g. CI on the sync PR).
+          token: ${{ secrets.SYNC_PAT || secrets.GITHUB_TOKEN }}
+
+      - name: Configure git identity
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream "https://github.com/${UPSTREAM_REPO}.git"
+          git fetch upstream "${UPSTREAM_BRANCH}"
+
+      - name: Detect new upstream commits
+        id: check
+        run: |
+          new_commits=$(git rev-list --count "origin/${FORK_BRANCH}..upstream/${UPSTREAM_BRANCH}")
+          echo "new_commits=${new_commits}" >> "$GITHUB_OUTPUT"
+          if [ "${new_commits}" -eq 0 ]; then
+            echo "No new upstream commits. Nothing to sync."
+          else
+            echo "Found ${new_commits} new upstream commit(s)."
+            git log --oneline "origin/${FORK_BRANCH}..upstream/${UPSTREAM_BRANCH}" | head -50
+          fi
+
+      - name: Reset sync branch to fork master
+        if: steps.check.outputs.new_commits != '0'
+        run: |
+          git checkout -B "${SYNC_BRANCH}" "origin/${FORK_BRANCH}"
+
+      - name: Merge upstream (no-ff, capture conflict state)
+        if: steps.check.outputs.new_commits != '0'
+        id: merge
+        run: |
+          set +e
+          git merge --no-ff --no-edit \
+            -m "chore: sync upstream ${UPSTREAM_REPO}@${UPSTREAM_BRANCH}" \
+            "upstream/${UPSTREAM_BRANCH}"
+          merge_status=$?
+          set -e
+          echo "merge_status=${merge_status}" >> "$GITHUB_OUTPUT"
+
+          if [ "${merge_status}" -ne 0 ]; then
+            echo "has_conflicts=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::Merge conflicts detected. Committing conflict markers so a PR can be opened for manual resolution."
+            # List conflicted files for the PR body
+            conflicted=$(git diff --name-only --diff-filter=U | tr '\n' ',' | sed 's/,$//')
+            echo "conflicted_files=${conflicted}" >> "$GITHUB_OUTPUT"
+            # Stage everything (including files with conflict markers) and commit
+            git add -A
+            git commit --no-verify -m "chore: sync upstream ${UPSTREAM_REPO}@${UPSTREAM_BRANCH} (CONFLICTS — MANUAL RESOLUTION NEEDED)" \
+              -m "Conflicted files: ${conflicted}"
+          else
+            echo "has_conflicts=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Push sync branch
+        if: steps.check.outputs.new_commits != '0'
+        run: |
+          git push --force-with-lease origin "${SYNC_BRANCH}"
+
+      - name: Open or update PR
+        if: steps.check.outputs.new_commits != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEW_COMMITS: ${{ steps.check.outputs.new_commits }}
+          HAS_CONFLICTS: ${{ steps.merge.outputs.has_conflicts }}
+          CONFLICTED_FILES: ${{ steps.merge.outputs.conflicted_files }}
+        run: |
+          title_prefix="chore: sync upstream ${UPSTREAM_REPO}@${UPSTREAM_BRANCH}"
+          if [ "${HAS_CONFLICTS}" = "true" ]; then
+            title="${title_prefix} (CONFLICTS)"
+            labels="upstream-sync,needs-manual-merge"
+            draft_flag="--draft"
+            body="⚠️  Upstream merge produced conflicts. This PR has been opened as a draft with the conflict markers committed so you can see the state.\n\n**Conflicted files:** ${CONFLICTED_FILES}\n\n**To resolve:**\n1. \`git fetch origin ${SYNC_BRANCH}\`\n2. \`git checkout ${SYNC_BRANCH}\`\n3. Resolve conflicts manually\n4. \`git commit --amend --no-edit\` (or a follow-up commit)\n5. \`git push --force-with-lease origin ${SYNC_BRANCH}\`\n\n${NEW_COMMITS} new upstream commit(s)."
+          else
+            title="${title_prefix}"
+            labels="upstream-sync"
+            draft_flag=""
+            body="Auto-sync from \`${UPSTREAM_REPO}:${UPSTREAM_BRANCH}\`.\n\n${NEW_COMMITS} new upstream commit(s). No conflicts.\n\nCI will verify the build. If \`allow_auto_merge\` is enabled on the PR, it will merge itself once required checks pass."
+          fi
+
+          existing=$(gh pr list --repo "${GITHUB_REPOSITORY}" --head "${SYNC_BRANCH}" --state open --json number --jq '.[0].number' 2>/dev/null || echo "")
+          if [ -n "${existing}" ]; then
+            echo "Updating existing PR #${existing}."
+            gh pr edit "${existing}" --repo "${GITHUB_REPOSITORY}" --title "${title}" --body "$(printf '%b' "${body}")" --add-label "${labels}"
+          else
+            echo "Opening new PR."
+            gh pr create \
+              --repo "${GITHUB_REPOSITORY}" \
+              --base "${FORK_BRANCH}" \
+              --head "${SYNC_BRANCH}" \
+              --title "${title}" \
+              --body "$(printf '%b' "${body}")" \
+              --label "${labels}" \
+              ${draft_flag}
+          fi

@@ -58,6 +58,10 @@ jobs:
         with:
           fetch-depth: 1
           clean: true
+          # Push as the PAT owner (you) so branch protection sees a bypass-listed
+          # human actor rather than github-actions[bot]. Falls back to the default
+          # GITHUB_TOKEN if the secret isn't set, which keeps forks working.
+          token: ${{ secrets.DEPLOY_TOKEN || secrets.GITHUB_TOKEN }}
 
       # - name: Check Expiration
       #   env:
@@ -237,8 +241,8 @@ jobs:
       - name: Commit and push generated report
         if: success() && env.SKIP_CRAWL != 'true'
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "Neil Shen"
+          git config user.email "neil.shen@sap.com"
           git add -A -- index.html 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "No changes to commit."
