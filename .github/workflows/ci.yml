@@ -37,7 +37,7 @@ jobs:
         run: |
           python -c "import trendradar; print('trendradar OK', getattr(trendradar, '__version__', '?'))"
           python -c "import mcp_server; print('mcp_server OK')"
-          python -c "from trendradar.notification import senders, dispatcher, treemap_image; print('notification OK')"
+          python -c "from trendradar.notification import senders, dispatcher; print('notification OK')"
 
       - name: Syntax check
         run: python -m compileall -q trendradar mcp_server
