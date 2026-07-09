@@ -101,6 +101,7 @@ def _load_notification_config(config_data: Dict) -> Dict:
         "BATCH_SEND_INTERVAL": advanced.get("batch_send_interval", 1.0),
         "FEISHU_MESSAGE_SEPARATOR": advanced.get("feishu_message_separator", "---"),
         "MAX_ACCOUNTS_PER_CHANNEL": max_accounts_env if max_accounts_env is not None else advanced.get("max_accounts_per_channel", 3),
+        "TREEMAP_IMAGE_TYPES": _get_env_str("TREEMAP_IMAGE_TYPES") or notification.get("treemap_image_types", "both"),
     }
 
 
@@ -453,21 +454,41 @@ def _load_webhook_config(config_data: Dict) -> Dict:
         "WEWORK_WEBHOOK_URL": _get_env_str("WEWORK_WEBHOOK_URL") or wework.get("webhook_url", ""),
         "WEWORK_MSG_TYPE": _get_env_str("WEWORK_MSG_TYPE") or wework.get("msg_type", "markdown"),
         "WEWORK_FORMAT": _get_env_str("WEWORK_FORMAT") or wework.get("format", "default"),
+        "WEWORK_TREEMAP_IMAGE": (
+            _get_env_bool("WEWORK_TREEMAP_IMAGE")
+            if _get_env_bool("WEWORK_TREEMAP_IMAGE") is not None
+            else wework.get("treemap_image", False)
+        ),
         # Telegram
         "TELEGRAM_BOT_TOKEN": _get_env_str("TELEGRAM_BOT_TOKEN") or telegram.get("bot_token", ""),
         "TELEGRAM_CHAT_ID": _get_env_str("TELEGRAM_CHAT_ID") or telegram.get("chat_id", ""),
         "TELEGRAM_FORMAT": _get_env_str("TELEGRAM_FORMAT") or telegram.get("format", "default"),
+        "TELEGRAM_TREEMAP_IMAGE": (
+            _get_env_bool("TELEGRAM_TREEMAP_IMAGE")
+            if _get_env_bool("TELEGRAM_TREEMAP_IMAGE") is not None
+            else telegram.get("treemap_image", False)
+        ),
         # 邮件
         "EMAIL_FROM": _get_env_str("EMAIL_FROM") or email.get("from", ""),
         "EMAIL_PASSWORD": _get_env_str("EMAIL_PASSWORD") or email.get("password", ""),
         "EMAIL_TO": _get_env_str("EMAIL_TO") or email.get("to", ""),
         "EMAIL_SMTP_SERVER": _get_env_str("EMAIL_SMTP_SERVER") or email.get("smtp_server", ""),
         "EMAIL_SMTP_PORT": _get_env_str("EMAIL_SMTP_PORT") or email.get("smtp_port", ""),
+        "EMAIL_TREEMAP_IMAGE": (
+            _get_env_bool("EMAIL_TREEMAP_IMAGE")
+            if _get_env_bool("EMAIL_TREEMAP_IMAGE") is not None
+            else email.get("treemap_image", False)
+        ),
         # ntfy
         "NTFY_SERVER_URL": _get_env_str("NTFY_SERVER_URL") or ntfy.get("server_url") or "https://ntfy.sh",
         "NTFY_TOPIC": _get_env_str("NTFY_TOPIC") or ntfy.get("topic", ""),
         "NTFY_TOKEN": _get_env_str("NTFY_TOKEN") or ntfy.get("token", ""),
         "NTFY_FORMAT": _get_env_str("NTFY_FORMAT") or ntfy.get("format", "default"),
+        "NTFY_TREEMAP_IMAGE": (
+            _get_env_bool("NTFY_TREEMAP_IMAGE")
+            if _get_env_bool("NTFY_TREEMAP_IMAGE") is not None
+            else ntfy.get("treemap_image", False)
+        ),
         # Bark
         "BARK_URL": _get_env_str("BARK_URL") or bark.get("url", ""),
         "BARK_FORMAT": _get_env_str("BARK_FORMAT") or bark.get("format", "default"),
@@ -478,6 +499,11 @@ def _load_webhook_config(config_data: Dict) -> Dict:
         "GENERIC_WEBHOOK_URL": _get_env_str("GENERIC_WEBHOOK_URL") or generic.get("webhook_url", ""),
         "GENERIC_WEBHOOK_TEMPLATE": _get_env_str("GENERIC_WEBHOOK_TEMPLATE") or generic.get("payload_template", ""),
         "GENERIC_WEBHOOK_FORMAT": _get_env_str("GENERIC_WEBHOOK_FORMAT") or generic.get("format", "default"),
+        "GENERIC_WEBHOOK_TREEMAP_IMAGE": (
+            _get_env_bool("GENERIC_WEBHOOK_TREEMAP_IMAGE")
+            if _get_env_bool("GENERIC_WEBHOOK_TREEMAP_IMAGE") is not None
+            else generic.get("treemap_image", False)
+        ),
     }
 
 

@@ -18,6 +18,9 @@ dependencies = [
     "yfinance>=0.2.0",
 ]
 
+[project.optional-dependencies]
+image = ["cairosvg>=2.7.0"]
+
 [project.scripts]
 trendradar = "trendradar.__main__:main"
 trendradar-mcp = "mcp_server.server:run_server"

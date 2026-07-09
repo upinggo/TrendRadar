@@ -249,6 +249,15 @@
 - **提示**：建议查看【历史更新】，明确具体的【功能内容】
 
 
+### 2026/07/08 - fork 增强
+
+- **Treemap 图片推送到通知渠道**：新增可选依赖 `trendradar[image]`（cairosvg），把 HTML 报告里的热点关键词和经济资产 treemap 光栅化为 PNG，随文本消息一起推送到 **Telegram / 邮件 / 企业微信 / ntfy**（其余渠道走文本，不影响）
+  - 每渠道独立开关：`notification.channels.<name>.treemap_image: true`（默认关闭，零回归）
+  - 全局类型控制：`notification.treemap_image_types: both`（`news` | `economic` | `both`）
+  - 缺失 cairosvg 或渲染失败时自动降级为纯文本，只打印一次警告，不阻塞通知
+  - 邮件走 `multipart/related` + `cid:` 内嵌，Telegram 走 sendPhoto，企业微信走 `msgtype:image`(base64+md5)，ntfy 走 `PUT` + `Filename` header（中文 Title 用 RFC2047 Base64 编码）
+  - 系统依赖：`brew install cairo`（macOS）/ `apt-get install libcairo2 fonts-noto-cjk`（Debian）
+
 ### 2026/07/07 - fork 增强
 
 - **经济资产 treemap 可视化**：HTML 报告经济分析板块新增涨跌热力图，按 |涨跌幅| 加权面积，红涨绿跌一目了然，平盘资产也保底可见
