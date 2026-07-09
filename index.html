@@ -421,7 +421,7 @@
             /* ===== Treemap 可视化 ===== */
             .treemap-block {
                 margin: 0 0 20px 0;
-                padding: 16px;
+                padding: clamp(12px, 2.5vw, 16px);
                 background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
                 border-radius: 12px;
                 border: 1px solid #e2e8f0;
@@ -435,21 +435,28 @@
                 flex-wrap: wrap;
             }
             .treemap-title {
-                font-size: 15px;
+                font-size: clamp(13px, 1.6vw, 15px);
                 font-weight: 600;
                 color: #1e293b;
             }
             .treemap-subtitle {
-                font-size: 12px;
+                font-size: clamp(11px, 1.3vw, 12px);
                 color: #64748b;
             }
             .treemap-svg {
                 display: block;
                 width: 100%;
                 height: auto;
-                aspect-ratio: 560 / 320;
                 border-radius: 8px;
                 background: #ffffff;
+            }
+            /* 默认（≥600px）：显示宽版横向布局 */
+            .treemap-svg--wide {
+                aspect-ratio: 560 / 320;
+            }
+            .treemap-svg--portrait {
+                display: none;
+                aspect-ratio: 360 / 420;
             }
             .treemap-tile { transition: opacity 0.15s ease; cursor: default; }
             .treemap-tile:hover { opacity: 0.85; }
@@ -473,10 +480,12 @@
                 height: 10px;
                 border-radius: 2px;
             }
-            @media (max-width: 480px) {
-                .treemap-block { padding: 12px; }
-                .treemap-title { font-size: 14px; }
-                .treemap-subtitle { font-size: 11px; }
+            /* 窄屏切换到纵向布局，tile 重新按纵向 squarify */
+            @media (max-width: 600px) {
+                .treemap-svg--wide { display: none; }
+                .treemap-svg--portrait {
+                    display: block;
+                }
             }
 
             .new-section {
@@ -1470,7 +1479,7 @@
                     </div>
                     <div class="info-item">
                         <span class="info-label">RSS 源</span>
-                        <span class="info-value">7/7</span>
+                        <span class="info-value">6/7</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">新增热点</span>
@@ -2178,10 +2187,10 @@
                 <div class="section-divider standalone-section">
                     <div class="standalone-section-header">
                         <div class="standalone-section-title">独立展示区</div>
-                        <div class="standalone-section-count">215 条</div>
+                        <div class="standalone-section-count">196 条</div>
                     </div>
                     <div class="tab-bar standalone-tab-bar">
-                        <button class="tab-btn active" data-standalone-tab="all">全部<span class="tab-count">215</span></button>
+                        <button class="tab-btn active" data-standalone-tab="all">全部<span class="tab-count">196</span></button>
                         <button class="tab-btn" data-standalone-tab="0">知乎<span class="tab-count">20</span></button>
                         <button class="tab-btn" data-standalone-tab="1">华尔街见闻<span class="tab-count">10</span></button>
                         <button class="tab-btn" data-standalone-tab="2">百度热搜<span class="tab-count">20</span></button>
@@ -2193,7 +2202,7 @@
                         <button class="tab-btn" data-standalone-tab="8">微博<span class="tab-count">20</span></button>
                         <button class="tab-btn" data-standalone-tab="9">抖音<span class="tab-count">20</span></button>
                         <button class="tab-btn" data-standalone-tab="10">贴吧<span class="tab-count">20</span></button>
-                        <button class="tab-btn" data-standalone-tab="11">Hacker News<span class="tab-count">20</span></button>
+                        <button class="tab-btn" data-standalone-tab="11">BingFinance<span class="tab-count">1</span></button>
                     </div>
                     <div class="standalone-groups-grid">
                     <div class="standalone-group" data-standalone-tab="0">
@@ -2287,7 +2296,7 @@
                             <div class="news-content">
                                 <div class="news-header"><span class="rank-num high">10</span><span class="time-info">12:16</span>
                                 </div>
-                                <div class="news-title"><a href="https://www.zhihu.com/question/2058095946735556042" target="_blank" class="news-link">世界杯 8 强已全部产生，如何看待 1/4 决赛的对阵形势？</a>
+                                <div class="news-title"><a href="https://www.zhihu.com/question/2057816942233309425" target="_blank" class="news-link">12306 修改凌晨车票提示语，将「务必注意时间」改为「请于某月某日晚到站候车」，如何看待这一修改？</a>
                                 </div>
                             </div>
                         </div>
@@ -3873,7 +3882,7 @@
                             </div>
                         </div>
                         <div class="news-item">
-                            <div class="news-number">5</div>
+                            <div class="news-number">9</div>
                             <div class="news-content">
                                 <div class="news-header"><span class="rank-num high">5</span><span class="time-info">12:16</span>
                                 </div>
@@ -3882,7 +3891,7 @@
                             </div>
                         </div>
                         <div class="news-item">
-                            <div class="news-number">6</div>
+                            <div class="news-number">13</div>
                             <div class="news-content">
                                 <div class="news-header"><span class="rank-num high">6</span><span class="time-info">12:16</span>
                                 </div>
@@ -3891,7 +3900,7 @@
                             </div>
                         </div>
                         <div class="news-item">
-                            <div class="news-number">7</div>
+                            <div class="news-number">14</div>
                             <div class="news-content">
                                 <div class="news-header"><span class="rank-num high">7</span><span class="time-info">12:16</span>
                                 </div>
@@ -3900,7 +3909,7 @@
                             </div>
                         </div>
                         <div class="news-item">
-                            <div class="news-number">8</div>
+                            <div class="news-number">15</div>
                             <div class="news-content">
                                 <div class="news-header"><span class="rank-num high">8</span><span class="time-info">12:16</span>
                                 </div>
@@ -3909,7 +3918,7 @@
                             </div>
                         </div>
                         <div class="news-item">
-                            <div class="news-number">9</div>
+                            <div class="news-number">16</div>
                             <div class="news-content">
                                 <div class="news-header"><span class="rank-num high">9</span><span class="time-info">12:16</span>
                                 </div>
@@ -3918,7 +3927,7 @@
                             </div>
                         </div>
                         <div class="news-item">
-                            <div class="news-number">10</div>
+                            <div class="news-number">17</div>
                             <div class="news-content">
                                 <div class="news-header"><span class="rank-num high">10</span><span class="time-info">12:16</span>
                                 </div>
@@ -3927,7 +3936,7 @@
                             </div>
                         </div>
                         <div class="news-item">
-                            <div class="news-number">11</div>
+                            <div class="news-number">18</div>
                             <div class="news-content">
                                 <div class="news-header"><span class="rank-num ">11</span><span class="time-info">12:16</span>
                                 </div>
@@ -3936,7 +3945,7 @@
                             </div>
                         </div>
                         <div class="news-item">
-                            <div class="news-number">12</div>
+                            <div class="news-number">19</div>
                             <div class="news-content">
                                 <div class="news-header"><span class="rank-num ">12</span><span class="time-info">12:16</span>
                                 </div>
@@ -4019,8 +4028,8 @@
                     </div>
                     <div class="standalone-group" data-standalone-tab="11">
                         <div class="standalone-header">
-                            <div class="standalone-name">Hacker News</div>
-                            <div class="standalone-count">20 条</div>
+                            <div class="standalone-name">BingFinance</div>
+                            <div class="standalone-count">1 条</div>
                         </div>
                         <div class="news-item">
                             <div class="news-number">1</div>
@@ -4259,7 +4268,8 @@
                                 <thead>
                                     <tr>
                                         <th style="padding: 6px 10px; text-align: left; border-bottom: 1px solid rgba(0,0,0,0.1);">资产</th>
-                                        <th style="padding: 6px 10px; text-align: right; border-bottom: 1px solid rgba(0,0,0,0.1);">保守型</th><th style="padding: 6px 10px; text-align: right; border-bottom: 1px solid rgba(0,0,0,0.1);">平衡型</th><th style="padding: 6px 10px; text-align: right; border-bottom: 1px solid rgba(0,0,0,0.1);">激进型</th>
+                                        <th style="padding: 6px 10px; text-align: right; border-bottom: 1px solid rgba(0,0,0,0.1);">价格</th>
+                                        <th style="padding: 6px 10px; text-align: right; border-bottom: 1px solid rgba(0,0,0,0.1);">涨跌幅</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -4339,7 +4349,6 @@
                             </table>
                         </div>
                     </div>
-                    <div class="ai-blocks-grid">
                     <div class="ai-block">
                         <div class="ai-block-title">保守型 · 配置逻辑</div>
                         <div class="ai-block-content">固收+黄金+现金占80%满足安全需求，配置高股息与银行应对低增长环境，最大押注中国国债与黄金对冲地缘风险。</div>

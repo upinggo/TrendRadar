@@ -201,6 +201,21 @@ This contributes to the sustainable maintenance of the project and the growth of
 - **Tip**: Check [Changelog] to understand specific [Features]
 
 
+### 2026/07/08 - Fork enhancement
+
+- **Treemap image push to notification channels**: New optional dependency `trendradar[image]` (cairosvg) rasterizes the report's keyword and economic-asset treemaps to PNGs and pushes them alongside the text messages on **Telegram / Email / WeCom / ntfy** (other channels stay text-only, no regression)
+  - Per-channel toggle: `notification.channels.<name>.treemap_image: true` (off by default)
+  - Global type filter: `notification.treemap_image_types: both` (`news` | `economic` | `both`)
+  - Missing cairosvg or render failure silently degrades to text; a single warning is printed
+  - Email uses `multipart/related` + `cid:` inline images; Telegram uses sendPhoto; WeCom uses `msgtype:image` (base64+md5); ntfy uses `PUT` with `Filename` header (RFC2047 Base64 for CJK titles)
+  - System deps: `brew install cairo` (macOS) / `apt-get install libcairo2 fonts-noto-cjk` (Debian)
+
+### 2026/07/07 - Fork enhancement
+
+- **Economic-asset treemap**: The economic-analysis section of the HTML report now renders a gain/loss heatmap — area weighted by |change %|, red-up / green-down, flat assets stay visible with a minimum area
+- **Trending keyword treemap across all platforms**: New `extract_trending_ngrams` extracts 2–4 char hot n-grams from all raw titles, rank-weighted per platform, with Chinese stopwords and same-headline-fragment / sliding-window substring de-duplication — no user keyword list required
+- **Squarified treemap layout**: In-house `_squarify` (Bruls et al.) produces rectangles with more balanced aspect ratios, adaptive font sizing / truncation, and auto-hidden text on tiny tiles
+
 ### 2026/06/19 - v6.10.0
 
 - **AI Translation Batch Processing**: Automatically splits large translation requests into batches, preventing single-request overflow failures
