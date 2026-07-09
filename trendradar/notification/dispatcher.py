@@ -371,7 +371,8 @@ class NotificationDispatcher:
         if self.config.get("GENERIC_WEBHOOK_URL"):
             results["generic_webhook"] = self._send_generic_webhook(
                 report_data, report_type, update_info, proxy_url, mode, rss_items, rss_new_items,
-                ai_analysis, display_regions, standalone_data, economic_analysis
+                ai_analysis, display_regions, standalone_data, economic_analysis,
+                treemap_pngs=treemap_pngs if self.config.get("GENERIC_WEBHOOK_TREEMAP_IMAGE") else None,
             )
 
         # 邮件（保持原有逻辑，已支持多收件人，AI 分析已嵌入 HTML）
@@ -862,6 +863,7 @@ class NotificationDispatcher:
         display_regions: Optional[Dict] = None,
         standalone_data: Optional[Dict] = None,
         economic_analysis: Optional["EconomicAnalysisResult"] = None,
+        treemap_pngs: Optional[Dict[str, bytes]] = None,
     ) -> bool:
         """发送到通用 Webhook（多账号，支持热榜+RSS合并+AI分析+经济分析+独立展示区）"""
         compact = self._channel_format("GENERIC_WEBHOOK") == "compact"
@@ -913,6 +915,7 @@ class NotificationDispatcher:
                 display_regions=display_regions,
                 standalone_data=standalone_data,
                 compact=compact,
+                treemap_pngs=treemap_pngs,
             )
             results.append(result)
 

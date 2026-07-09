@@ -499,6 +499,11 @@ def _load_webhook_config(config_data: Dict) -> Dict:
         "GENERIC_WEBHOOK_URL": _get_env_str("GENERIC_WEBHOOK_URL") or generic.get("webhook_url", ""),
         "GENERIC_WEBHOOK_TEMPLATE": _get_env_str("GENERIC_WEBHOOK_TEMPLATE") or generic.get("payload_template", ""),
         "GENERIC_WEBHOOK_FORMAT": _get_env_str("GENERIC_WEBHOOK_FORMAT") or generic.get("format", "default"),
+        "GENERIC_WEBHOOK_TREEMAP_IMAGE": (
+            _get_env_bool("GENERIC_WEBHOOK_TREEMAP_IMAGE")
+            if _get_env_bool("GENERIC_WEBHOOK_TREEMAP_IMAGE") is not None
+            else generic.get("treemap_image", False)
+        ),
     }
 
 

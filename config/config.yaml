@@ -340,10 +340,19 @@ notification:
 
     generic_webhook:
       webhook_url: ""                 # 通用 Webhook URL（支持 Discord、Matrix、IFTTT 等）ttps://sctapi.ftqq.com/your_key.send
-      payload_template: ""            # JSON 模板，支持 {title} 和 {content} 占位符
+      payload_template: ""            # JSON 模板，支持以下占位符：
+                                      #   {title}                       — 报告类型
+                                      #   {content}                     — 当前批次文本
+                                      # 图片占位符（需 treemap_image: true 且安装 trendradar[image]）：
+                                      #   {treemap_news_base64}         — 纯 base64 字符串
+                                      #   {treemap_economic_base64}
+                                      #   {treemap_news_datauri}        — data:image/png;base64,... 完整 URI
+                                      #   {treemap_economic_datauri}
+                                      # 图片仅在最后一个批次注入，其它批次占位符为空字符串
                                       # 示例：{"content": "{content}"}
                                       # 留空则使用默认格式：{"title": "{title}", "content": "{content}"}
       format: "compact"               # default | compact
+      treemap_image: true            # 是否将 treemap PNG 注入到模板占位符（需接收方支持 base64/data URI）
 
 
 # ===============================================================

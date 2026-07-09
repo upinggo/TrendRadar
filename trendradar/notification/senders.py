@@ -1412,6 +1412,7 @@ def send_to_generic_webhook(
     display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
     compact: bool = False,
+    treemap_pngs: Optional[Dict[str, bytes]] = None,
 ) -> bool:
     """
     发送到通用 Webhook（支持分批发送，支持自定义 JSON 模板，支持热榜+RSS合并+独立展示区）
@@ -1430,6 +1431,8 @@ def send_to_generic_webhook(
         split_content_func: 内容分批函数
         rss_items: RSS 统计条目列表（可选，用于合并推送）
         rss_new_items: RSS 新增条目列表（可选，用于新增区块）
+        treemap_pngs: {name: png_bytes} treemap 图片字典（可选），当模板包含
+            {treemap_<name>_base64} 或 {treemap_<name>_datauri} 占位符时注入到最后一个批次
 
     Returns:
         bool: 发送是否成功
@@ -1471,6 +1474,20 @@ def send_to_generic_webhook(
 
     print(f"{log_prefix}消息分为 {len(batches)} 批次发送 [{report_type}]")
 
+    # 预先计算 treemap 占位符替换值（json.dumps 后去掉首尾引号即为 JSON 字符串字面量安全值）
+    # 即使 treemap_pngs 为空也定义占位符→"" 的映射，避免模板中残留字面量 {treemap_xxx}
+    treemap_placeholders: Dict[str, str] = {}
+    if payload_template:
+        for name in ("news", "economic"):
+            png = (treemap_pngs or {}).get(name)
+            if png:
+                b64 = base64.b64encode(png).decode("ascii")
+                treemap_placeholders[f"{{treemap_{name}_base64}}"] = b64
+                treemap_placeholders[f"{{treemap_{name}_datauri}}"] = f"data:image/png;base64,{b64}"
+            else:
+                treemap_placeholders[f"{{treemap_{name}_base64}}"] = ""
+                treemap_placeholders[f"{{treemap_{name}_datauri}}"] = ""
+
     # 逐批发送
     for i, batch_content in enumerate(batches, 1):
         content_size = len(batch_content.encode("utf-8"))
@@ -1485,9 +1502,26 @@ def send_to_generic_webhook(
                 # 注意：content 可能包含 JSON 特殊字符，需要先转义
                 json_content = json.dumps(batch_content)[1:-1] # 去掉首尾引号
                 json_title = json.dumps(report_type)[1:-1]
-                
+
                 payload_str = payload_template.replace("{content}", json_content).replace("{title}", json_title)
-                
+
+                # treemap 图片仅在最后一个批次注入，其它批次占位符替换为空字符串
+                # 避免每一批次都携带 100KB+ base64 数据
+                is_last_batch = (i == len(batches))
+                for placeholder, value in treemap_placeholders.items():
+                    injected = value if is_last_batch else ""
+                    # base64 只含 A-Za-z0-9+/= 字符，是 JSON 字符串字面量安全的
+                    payload_str = payload_str.replace(placeholder, injected)
+
+                # payload 大小健康检查（仅在最后批次含图片时可能触发）
+                if is_last_batch and treemap_pngs:
+                    payload_bytes = len(payload_str.encode("utf-8"))
+                    if payload_bytes > batch_size * 8:
+                        print(
+                            f"{log_prefix}警告：含 treemap 图片的 payload 较大 "
+                            f"({payload_bytes} 字节)，请确认接收方支持"
+                        )
+
                 # 尝试解析为 JSON 对象以验证有效性
                 try:
                     payload = json.loads(payload_str)
