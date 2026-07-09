@@ -61,7 +61,7 @@ jobs:
           # Push as the PAT owner (you) so branch protection sees a bypass-listed
           # human actor rather than github-actions[bot]. Falls back to the default
           # GITHUB_TOKEN if the secret isn't set, which keeps forks working.
-          token: ${{ secrets.DEPLOY_TOKEN || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.CRAWLER_PAT || secrets.GITHUB_TOKEN }}
 
       # - name: Check Expiration
       #   env:
