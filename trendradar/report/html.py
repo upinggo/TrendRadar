@@ -480,7 +480,7 @@ def render_html_content(
             /* ===== Treemap 可视化 ===== */
             .treemap-block {
                 margin: 0 0 20px 0;
-                padding: 16px;
+                padding: clamp(12px, 2.5vw, 16px);
                 background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
                 border-radius: 12px;
                 border: 1px solid #e2e8f0;
@@ -494,21 +494,28 @@ def render_html_content(
                 flex-wrap: wrap;
             }
             .treemap-title {
-                font-size: 15px;
+                font-size: clamp(13px, 1.6vw, 15px);
                 font-weight: 600;
                 color: #1e293b;
             }
             .treemap-subtitle {
-                font-size: 12px;
+                font-size: clamp(11px, 1.3vw, 12px);
                 color: #64748b;
             }
             .treemap-svg {
                 display: block;
                 width: 100%;
                 height: auto;
-                aspect-ratio: 560 / 320;
                 border-radius: 8px;
                 background: #ffffff;
+            }
+            /* 默认（≥600px）：显示宽版横向布局 */
+            .treemap-svg--wide {
+                aspect-ratio: 560 / 320;
+            }
+            .treemap-svg--portrait {
+                display: none;
+                aspect-ratio: 360 / 420;
             }
             .treemap-tile { transition: opacity 0.15s ease; cursor: default; }
             .treemap-tile:hover { opacity: 0.85; }
@@ -532,10 +539,12 @@ def render_html_content(
                 height: 10px;
                 border-radius: 2px;
             }
-            @media (max-width: 480px) {
-                .treemap-block { padding: 12px; }
-                .treemap-title { font-size: 14px; }
-                .treemap-subtitle { font-size: 11px; }
+            /* 窄屏切换到纵向布局，tile 重新按纵向 squarify */
+            @media (max-width: 600px) {
+                .treemap-svg--wide { display: none; }
+                .treemap-svg--portrait {
+                    display: block;
+                }
             }
 
             .new-section {

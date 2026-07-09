@@ -7,7 +7,7 @@
 
 import re
 from collections import defaultdict
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 
 def clean_title(title: str) -> str:
@@ -265,41 +265,21 @@ def _squarify(values: List[float], x: float, y: float, w: float, h: float) -> Li
     return rects
 
 
-def render_news_treemap_svg(
-    stats: List[Dict],
-    width: int = 560,
-    height: int = 320,
-    title: str = "🗺️ 热点关键词分布",
-    subtitle_prefix: str = "按命中数占比",
+def _render_treemap_tiles(
+    items: List[Tuple[str, float]],
+    total: float,
+    width: float,
+    height: float,
 ) -> str:
-    """渲染新闻热点关键词 treemap 为 inline SVG。
-
-    Args:
-        stats: 关键词分组列表 [{word, count, titles: [...]}]，也可以是从 raw titles
-            通过 extract_trending_ngrams 得到的趋势条目
-        width, height: SVG viewBox 尺寸
-        title: 标题文本
-        subtitle_prefix: 副标题前缀（后面会自动附加 "共 N 条"）
-
-    Returns:
-        HTML 字符串（外层带 .treemap-section wrapper），无数据时返回空字符串。
-    """
-    if not stats:
-        return ""
-    items = [(s.get("word", ""), float(s.get("count", 0))) for s in stats if s.get("count", 0) > 0]
-    if not items:
-        return ""
-
-    items.sort(key=lambda x: x[1], reverse=True)
+    """为给定尺寸生成 treemap tile 的 SVG 内容（不含 <svg> 外层）。"""
     values = [c for _, c in items]
-    total = sum(values)
-    if total <= 0:
+    if not values or total <= 0:
         return ""
 
     rects = _squarify(values, 0.0, 0.0, float(width), float(height))
-
+    max_count = values[0]
     tiles = ""
-    max_count = values[0] if values else 0.0
+
     for (word, count), rect in zip(items, rects):
         if rect["w"] < 0.5 or rect["h"] < 0.5:
             continue
@@ -366,6 +346,49 @@ def render_news_treemap_svg(
             )
         tiles += "</g>"
 
+    return tiles
+
+
+def render_news_treemap_svg(
+    stats: List[Dict],
+    width: int = 560,
+    height: int = 320,
+    title: str = "🗺️ 热点关键词分布",
+    subtitle_prefix: str = "按命中数占比",
+    portrait_width: int = 360,
+    portrait_height: int = 420,
+) -> str:
+    """渲染新闻热点关键词 treemap 为响应式 inline SVG。
+
+    输出包含两个 SVG：横向布局（desktop/tablet）和纵向布局（mobile），
+    由 CSS media query 切换显示。每个 SVG 都用对应尺寸单独运行 squarified
+    布局，保证 tile 比例在各视口下都不失真。
+
+    Args:
+        stats: 关键词分组列表 [{word, count, titles: [...]}]，也可以是从 raw titles
+            通过 extract_trending_ngrams 得到的趋势条目
+        width, height: 横向 SVG viewBox 尺寸（desktop）
+        portrait_width, portrait_height: 纵向 SVG viewBox 尺寸（mobile）
+        title: 标题文本
+        subtitle_prefix: 副标题前缀（后面会自动附加 "共 N 条"）
+
+    Returns:
+        HTML 字符串，无数据时返回空字符串。
+    """
+    if not stats:
+        return ""
+    items = [(s.get("word", ""), float(s.get("count", 0))) for s in stats if s.get("count", 0) > 0]
+    if not items:
+        return ""
+
+    items.sort(key=lambda x: x[1], reverse=True)
+    total = sum(c for _, c in items)
+    if total <= 0:
+        return ""
+
+    wide_tiles = _render_treemap_tiles(items, total, float(width), float(height))
+    portrait_tiles = _render_treemap_tiles(items, total, float(portrait_width), float(portrait_height))
+
     # 副标题的计数：n-gram 趋势模式（subtitle_prefix 含"加权"）显示关键词数量，否则显示原始命中数
     if "加权" in subtitle_prefix:
         total_display = f"共 {len(items)} 个关键词"
@@ -380,9 +403,12 @@ def render_news_treemap_svg(
         f'<div class="treemap-title">{title}</div>'
         f'<div class="treemap-subtitle">{subtitle_prefix} · {total_display}</div>'
         '</div>'
-        f'<svg class="treemap-svg" viewBox="0 0 {width} {height}" '
-        f'preserveAspectRatio="none" role="img" aria-label="News keyword treemap">'
-        f'{tiles}</svg>'
+        f'<svg class="treemap-svg treemap-svg--wide" viewBox="0 0 {width} {height}" '
+        f'preserveAspectRatio="xMidYMid meet" role="img" aria-label="News keyword treemap">'
+        f'{wide_tiles}</svg>'
+        f'<svg class="treemap-svg treemap-svg--portrait" viewBox="0 0 {portrait_width} {portrait_height}" '
+        f'preserveAspectRatio="xMidYMid meet" role="img" aria-label="News keyword treemap" aria-hidden="true">'
+        f'{portrait_tiles}</svg>'
         '</div>'
     )
 
