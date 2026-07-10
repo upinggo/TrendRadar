@@ -352,7 +352,7 @@ notification:
                                       # 示例：{"content": "{content}"}
                                       # 留空则使用默认格式：{"title": "{title}", "content": "{content}"}
       format: "compact"               # default | compact
-      treemap_image: true            # 是否将 treemap PNG 注入到模板占位符（需接收方支持 base64/data URI）
+      treemap_image: false            # 是否将 treemap PNG 注入到模板占位符（需接收方支持 base64/data URI）since it does not work with all webhook receivers, please test before enabling
 
 
 # ===============================================================
