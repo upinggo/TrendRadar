@@ -12,7 +12,7 @@ dependencies = [
     "feedparser==6.0.12",
     "boto3==1.42.76",
     "litellm==1.84.0",
-    "json-repair==0.58.6",
+    "json-repair==0.60.1",
     "tenacity==8.5.0",
     "akshare>=1.16.0",
     "yfinance>=0.2.0",
