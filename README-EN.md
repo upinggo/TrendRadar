@@ -146,7 +146,7 @@ After communication, the author indicated no concerns about server pressure, but
 
 > **Sponsorship Open**
 >
-> Interested in sponsoring? Trigger the auto-reply in my WeChat Official Account to get my contact details
+> [Interested in sponsoring? View sponsorship and partnership details](https://trendradar.sandev.cc/en/sponsors/)
 
 </div>
 
@@ -3894,7 +3894,9 @@ Any client supporting Model Context Protocol can connect to TrendRadar:
 - https://github.com/sansan0/bilibili-comment-analyzer
 
 
-[![Star History Chart](https://api.star-history.com/svg?repos=sansan0/TrendRadar&type=Date)](https://www.star-history.com/#sansan0/TrendRadar&Date)
+## Star History
+
+[![Star History Chart](https://star-history.dera.page/svg?repos=sansan0/TrendRadar)](https://star-history.dera.page/#sansan0/TrendRadar)
 
 <br>
 
