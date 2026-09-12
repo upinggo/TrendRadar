@@ -194,7 +194,7 @@
 
 > **虚位以待**
 >
-> 有意赞助？在微信公众号中触发自动回复，即可获取我的联系方式
+> [有意赞助？点击查看赞助与合作详情](https://trendradar.sandev.cc/zh/sponsors/)
 
 </div>
 
@@ -3896,7 +3896,9 @@ MCP Inspector 是官方调试工具，用于测试 MCP 连接：
 - https://github.com/sansan0/bilibili-comment-analyzer
 
 
-[![Star History Chart](https://api.star-history.com/svg?repos=sansan0/TrendRadar&type=Date)](https://www.star-history.com/#sansan0/TrendRadar&Date)
+## Star History
+
+[![Star History Chart](https://star-history.dera.page/svg?repos=sansan0/TrendRadar)](https://star-history.dera.page/#sansan0/TrendRadar)
 
 <br>
 
