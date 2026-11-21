@@ -47,11 +47,14 @@ def _extract_ai_stats(ai_analysis) -> Optional[Dict]:
         "max_news_limit": getattr(ai_analysis, "max_news_limit", 0),
         "hotlist_count": getattr(ai_analysis, "hotlist_count", 0),
         "rss_count": getattr(ai_analysis, "rss_count", 0),
+        "search_count": getattr(ai_analysis, "search_count", 0),
         "hotlist_analyzed": getattr(ai_analysis, "hotlist_analyzed", 0),
         "rss_analyzed": getattr(ai_analysis, "rss_analyzed", 0),
+        "search_analyzed": getattr(ai_analysis, "search_analyzed", 0),
         "standalone_analyzed": getattr(ai_analysis, "standalone_analyzed", 0),
         "ai_mode": getattr(ai_analysis, "ai_mode", ""),
         "include_rss": getattr(ai_analysis, "include_rss", True),
+        "include_web_search": getattr(ai_analysis, "include_web_search", True),
         "include_standalone": getattr(ai_analysis, "include_standalone", False),
     }
 
@@ -156,10 +159,16 @@ def send_to_feishu(
     economic_analysis: Any = None,
     display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
+<<<<<<< HEAD
     compact: bool = False,
+=======
+    search_items: Optional[list] = None,
+    search_new_items: Optional[list] = None,
+    show_search_snippet: bool = False,
+>>>>>>> upstream/master
 ) -> bool:
     """
-    发送到飞书（支持分批发送，支持热榜+RSS合并+独立展示区）
+    发送到飞书（支持分批发送，支持热榜+RSS+联网搜索合并+独立展示区）
 
     Args:
         webhook_url: 飞书 Webhook URL
@@ -175,6 +184,9 @@ def send_to_feishu(
         get_time_func: 获取当前时间的函数
         rss_items: RSS 统计条目列表（可选，用于合并推送）
         rss_new_items: RSS 新增条目列表（可选，用于新增区块）
+        search_items: 联网搜索统计条目列表（可选）
+        search_new_items: 联网搜索新增条目列表（可选）
+        show_search_snippet: 是否在搜索结果下附带简短摘要
 
     Returns:
         bool: 发送是否成功
@@ -207,7 +219,13 @@ def send_to_feishu(
         standalone_data=standalone_data,
         ai_stats=ai_stats,
         report_type=report_type,
+<<<<<<< HEAD
         compact=compact,
+=======
+        search_items=search_items,
+        search_new_items=search_new_items,
+        show_search_snippet=show_search_snippet,
+>>>>>>> upstream/master
     )
 
     # 统一添加批次头部（已预留空间，不会超限）
@@ -294,10 +312,16 @@ def send_to_dingtalk(
     economic_analysis: Any = None,
     display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
+<<<<<<< HEAD
     compact: bool = False,
+=======
+    search_items: Optional[list] = None,
+    search_new_items: Optional[list] = None,
+    show_search_snippet: bool = False,
+>>>>>>> upstream/master
 ) -> bool:
     """
-    发送到钉钉（支持分批发送，支持热榜+RSS合并+独立展示区）
+    发送到钉钉（支持分批发送，支持热榜+RSS+联网搜索合并+独立展示区）
 
     Args:
         webhook_url: 钉钉 Webhook URL
@@ -312,6 +336,9 @@ def send_to_dingtalk(
         split_content_func: 内容分批函数
         rss_items: RSS 统计条目列表（可选，用于合并推送）
         rss_new_items: RSS 新增条目列表（可选，用于新增区块）
+        search_items: 联网搜索统计条目列表（可选）
+        search_new_items: 联网搜索新增条目列表（可选）
+        show_search_snippet: 是否在搜索结果下附带简短摘要
 
     Returns:
         bool: 发送是否成功
@@ -344,7 +371,13 @@ def send_to_dingtalk(
         standalone_data=standalone_data,
         ai_stats=ai_stats,
         report_type=report_type,
+<<<<<<< HEAD
         compact=compact,
+=======
+        search_items=search_items,
+        search_new_items=search_new_items,
+        show_search_snippet=show_search_snippet,
+>>>>>>> upstream/master
     )
 
     # 统一添加批次头部（已预留空间，不会超限）
@@ -416,11 +449,17 @@ def send_to_wework(
     economic_analysis: Any = None,
     display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
+<<<<<<< HEAD
     compact: bool = False,
     treemap_pngs: Optional[Dict[str, bytes]] = None,
+=======
+    search_items: Optional[list] = None,
+    search_new_items: Optional[list] = None,
+    show_search_snippet: bool = False,
+>>>>>>> upstream/master
 ) -> bool:
     """
-    发送到企业微信（支持分批发送，支持 markdown 和 text 两种格式，支持热榜+RSS合并+独立展示区）
+    发送到企业微信（支持分批发送，支持 markdown 和 text 两种格式，支持热榜+RSS+联网搜索合并+独立展示区）
 
     Args:
         webhook_url: 企业微信 Webhook URL
@@ -436,6 +475,9 @@ def send_to_wework(
         split_content_func: 内容分批函数
         rss_items: RSS 统计条目列表（可选，用于合并推送）
         rss_new_items: RSS 新增条目列表（可选，用于新增区块）
+        search_items: 联网搜索统计条目列表（可选）
+        search_new_items: 联网搜索新增条目列表（可选）
+        show_search_snippet: 是否在搜索结果下附带简短摘要
 
     Returns:
         bool: 发送是否成功
@@ -475,7 +517,13 @@ def send_to_wework(
         standalone_data=standalone_data,
         ai_stats=ai_stats,
         report_type=report_type,
+<<<<<<< HEAD
         compact=compact,
+=======
+        search_items=search_items,
+        search_new_items=search_new_items,
+        show_search_snippet=show_search_snippet,
+>>>>>>> upstream/master
     )
 
     # 统一添加批次头部（已预留空间，不会超限）
@@ -557,11 +605,17 @@ def send_to_telegram(
     economic_analysis: Any = None,
     display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
+<<<<<<< HEAD
     compact: bool = False,
     treemap_pngs: Optional[Dict[str, bytes]] = None,
+=======
+    search_items: Optional[list] = None,
+    search_new_items: Optional[list] = None,
+    show_search_snippet: bool = False,
+>>>>>>> upstream/master
 ) -> bool:
     """
-    发送到 Telegram（支持分批发送，支持热榜+RSS合并+独立展示区）
+    发送到 Telegram（支持分批发送，支持热榜+RSS+联网搜索合并+独立展示区）
 
     Args:
         bot_token: Telegram Bot Token
@@ -577,6 +631,9 @@ def send_to_telegram(
         split_content_func: 内容分批函数
         rss_items: RSS 统计条目列表（可选，用于合并推送）
         rss_new_items: RSS 新增条目列表（可选，用于新增区块）
+        search_items: 联网搜索统计条目列表（可选）
+        search_new_items: 联网搜索新增条目列表（可选）
+        show_search_snippet: 是否在搜索结果下附带简短摘要
 
     Returns:
         bool: 发送是否成功
@@ -607,7 +664,13 @@ def send_to_telegram(
         standalone_data=standalone_data,
         ai_stats=ai_stats,
         report_type=report_type,
+<<<<<<< HEAD
         compact=compact,
+=======
+        search_items=search_items,
+        search_new_items=search_new_items,
+        show_search_snippet=show_search_snippet,
+>>>>>>> upstream/master
     )
 
     # 统一添加批次头部（已预留空间，不会超限）
@@ -725,7 +788,14 @@ def send_to_email(
 
         print(f"使用HTML文件: {html_file_path}")
         with open(html_file_path, "r", encoding="utf-8") as f:
-            html_content = f.read()
+            raw_html_content = f.read()
+
+        # 净化为邮件专用 HTML：移除 JS 及纯浏览器交互控件（Tab/导出按钮等），全部主题平铺展开并缩小体积避免被邮箱截断
+        from trendradar.report.html import prepare_html_for_email
+        html_content = prepare_html_for_email(raw_html_content)
+        raw_kb = len(raw_html_content.encode("utf-8")) / 1024
+        mail_kb = len(html_content.encode("utf-8")) / 1024
+        print(f"邮件 HTML 已适配（移除无效脚本与 Tab 按钮，内容全展开）：{raw_kb:.1f} KB -> {mail_kb:.1f} KB")
 
         domain = from_email.split("@")[-1].lower()
 
@@ -898,11 +968,17 @@ def send_to_ntfy(
     economic_analysis: Any = None,
     display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
+<<<<<<< HEAD
     compact: bool = False,
     treemap_pngs: Optional[Dict[str, bytes]] = None,
+=======
+    search_items: Optional[list] = None,
+    search_new_items: Optional[list] = None,
+    show_search_snippet: bool = False,
+>>>>>>> upstream/master
 ) -> bool:
     """
-    发送到 ntfy（支持分批发送，严格遵守4KB限制，支持热榜+RSS合并+独立展示区）
+    发送到 ntfy（支持分批发送，严格遵守4KB限制，支持热榜+RSS+联网搜索合并+独立展示区）
 
     Args:
         server_url: ntfy 服务器 URL
@@ -918,6 +994,9 @@ def send_to_ntfy(
         split_content_func: 内容分批函数
         rss_items: RSS 统计条目列表（可选，用于合并推送）
         rss_new_items: RSS 新增条目列表（可选，用于新增区块）
+        search_items: 联网搜索统计条目列表（可选）
+        search_new_items: 联网搜索新增条目列表（可选）
+        show_search_snippet: 是否在搜索结果下附带简短摘要
 
     Returns:
         bool: 发送是否成功
@@ -971,7 +1050,13 @@ def send_to_ntfy(
         standalone_data=standalone_data,
         ai_stats=ai_stats,
         report_type=report_type,
+<<<<<<< HEAD
         compact=compact,
+=======
+        search_items=search_items,
+        search_new_items=search_new_items,
+        show_search_snippet=show_search_snippet,
+>>>>>>> upstream/master
     )
 
     # 统一添加批次头部（已预留空间，不会超限）
@@ -1132,10 +1217,16 @@ def send_to_bark(
     economic_analysis: Any = None,
     display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
+<<<<<<< HEAD
     compact: bool = False,
+=======
+    search_items: Optional[list] = None,
+    search_new_items: Optional[list] = None,
+    show_search_snippet: bool = False,
+>>>>>>> upstream/master
 ) -> bool:
     """
-    发送到 Bark（支持分批发送，使用 markdown 格式，支持热榜+RSS合并+独立展示区）
+    发送到 Bark（支持分批发送，使用 markdown 格式，支持热榜+RSS+联网搜索合并+独立展示区）
 
     Args:
         bark_url: Bark URL（包含 device_key）
@@ -1150,6 +1241,9 @@ def send_to_bark(
         split_content_func: 内容分批函数
         rss_items: RSS 统计条目列表（可选，用于合并推送）
         rss_new_items: RSS 新增条目列表（可选，用于新增区块）
+        search_items: 联网搜索统计条目列表（可选）
+        search_new_items: 联网搜索新增条目列表（可选）
+        show_search_snippet: 是否在搜索结果下附带简短摘要
 
     Returns:
         bool: 发送是否成功
@@ -1189,7 +1283,13 @@ def send_to_bark(
         standalone_data=standalone_data,
         ai_stats=ai_stats,
         report_type=report_type,
+<<<<<<< HEAD
         compact=compact,
+=======
+        search_items=search_items,
+        search_new_items=search_new_items,
+        show_search_snippet=show_search_snippet,
+>>>>>>> upstream/master
     )
 
     # 统一添加批次头部（已预留空间，不会超限）
@@ -1299,10 +1399,16 @@ def send_to_slack(
     economic_analysis: Any = None,
     display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
+<<<<<<< HEAD
     compact: bool = False,
+=======
+    search_items: Optional[list] = None,
+    search_new_items: Optional[list] = None,
+    show_search_snippet: bool = False,
+>>>>>>> upstream/master
 ) -> bool:
     """
-    发送到 Slack（支持分批发送，使用 mrkdwn 格式，支持热榜+RSS合并+独立展示区）
+    发送到 Slack（支持分批发送，使用 mrkdwn 格式，支持热榜+RSS+联网搜索合并+独立展示区）
 
     Args:
         webhook_url: Slack Webhook URL
@@ -1317,6 +1423,9 @@ def send_to_slack(
         split_content_func: 内容分批函数
         rss_items: RSS 统计条目列表（可选，用于合并推送）
         rss_new_items: RSS 新增条目列表（可选，用于新增区块）
+        search_items: 联网搜索统计条目列表（可选）
+        search_new_items: 联网搜索新增条目列表（可选）
+        show_search_snippet: 是否在搜索结果下附带简短摘要
 
     Returns:
         bool: 发送是否成功
@@ -1345,7 +1454,13 @@ def send_to_slack(
         standalone_data=standalone_data,
         ai_stats=ai_stats,
         report_type=report_type,
+<<<<<<< HEAD
         compact=compact,
+=======
+        search_items=search_items,
+        search_new_items=search_new_items,
+        show_search_snippet=show_search_snippet,
+>>>>>>> upstream/master
     )
 
     # 统一添加批次头部（已预留空间，不会超限）
@@ -1411,11 +1526,17 @@ def send_to_generic_webhook(
     economic_analysis: Any = None,
     display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
+<<<<<<< HEAD
     compact: bool = False,
     treemap_pngs: Optional[Dict[str, bytes]] = None,
+=======
+    search_items: Optional[list] = None,
+    search_new_items: Optional[list] = None,
+    show_search_snippet: bool = False,
+>>>>>>> upstream/master
 ) -> bool:
     """
-    发送到通用 Webhook（支持分批发送，支持自定义 JSON 模板，支持热榜+RSS合并+独立展示区）
+    发送到通用 Webhook（支持分批发送，支持自定义 JSON 模板，支持热榜+RSS+联网搜索合并+独立展示区）
 
     Args:
         webhook_url: Webhook URL
@@ -1431,8 +1552,14 @@ def send_to_generic_webhook(
         split_content_func: 内容分批函数
         rss_items: RSS 统计条目列表（可选，用于合并推送）
         rss_new_items: RSS 新增条目列表（可选，用于新增区块）
+<<<<<<< HEAD
         treemap_pngs: {name: png_bytes} treemap 图片字典（可选），当模板包含
             {treemap_<name>_base64} 或 {treemap_<name>_datauri} 占位符时注入到最后一个批次
+=======
+        search_items: 联网搜索统计条目列表（可选）
+        search_new_items: 联网搜索新增条目列表（可选）
+        show_search_snippet: 是否在搜索结果下附带简短摘要
+>>>>>>> upstream/master
 
     Returns:
         bool: 发送是否成功
@@ -1466,7 +1593,13 @@ def send_to_generic_webhook(
         standalone_data=standalone_data,
         ai_stats=ai_stats,
         report_type=report_type,
+<<<<<<< HEAD
         compact=compact,
+=======
+        search_items=search_items,
+        search_new_items=search_new_items,
+        show_search_snippet=show_search_snippet,
+>>>>>>> upstream/master
     )
 
     # 统一添加批次头部
