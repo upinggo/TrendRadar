@@ -8,6 +8,7 @@ HTML 报告渲染模块
 import json
 import re
 from datetime import datetime
+from html.parser import HTMLParser
 from typing import Any, Dict, List, Optional, Callable
 
 from trendradar.report.helpers import html_escape, calculate_rank_trend, render_news_treemap_svg
@@ -30,7 +31,75 @@ _EMAIL_TOC_RE = re.compile(
 _EMAIL_DATA_ATTR_RE = re.compile(
     r'\s+data-(?:rank-(?:timeline|source)|copy-query|ai-accent)="[^"]*"'
 )
-_SCRIPT_TAG_RE = re.compile(r"<script\b[^>]*>.*?</script>", re.DOTALL | re.IGNORECASE)
+class _ScriptTagStripper(HTMLParser):
+    """Remove script blocks with a real HTML parser.
+
+    A regex such as ``<script>.*?</script>`` misses browser-accepted variants like
+    ``</script >`` and can leave executable content in the email HTML.  Using
+    ``HTMLParser`` lets us recognize those variants while preserving the rest of
+    the generated markup as-is.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=False)
+        self.parts: List[str] = []
+        self._script_depth = 0
+
+    def handle_starttag(self, tag: str, attrs: List[tuple]) -> None:
+        if tag.lower() == "script":
+            self._script_depth += 1
+            return
+        if self._script_depth == 0:
+            self.parts.append(self.get_starttag_text() or "")
+
+    def handle_startendtag(self, tag: str, attrs: List[tuple]) -> None:
+        if tag.lower() == "script" or self._script_depth:
+            return
+        self.parts.append(self.get_starttag_text() or "")
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag.lower() == "script":
+            if self._script_depth:
+                self._script_depth -= 1
+            return
+        if self._script_depth == 0:
+            self.parts.append(f"</{tag}>")
+
+    def handle_data(self, data: str) -> None:
+        if self._script_depth == 0:
+            self.parts.append(data)
+
+    def handle_entityref(self, name: str) -> None:
+        if self._script_depth == 0:
+            self.parts.append(f"&{name};")
+
+    def handle_charref(self, name: str) -> None:
+        if self._script_depth == 0:
+            self.parts.append(f"&#{name};")
+
+    def handle_comment(self, data: str) -> None:
+        if self._script_depth == 0:
+            self.parts.append(f"<!--{data}-->")
+
+    def handle_decl(self, decl: str) -> None:
+        if self._script_depth == 0:
+            self.parts.append(f"<!{decl}>")
+
+    def handle_pi(self, data: str) -> None:
+        if self._script_depth == 0:
+            self.parts.append(f"<?{data}>")
+
+    def unknown_decl(self, data: str) -> None:
+        if self._script_depth == 0:
+            self.parts.append(f"<![{data}]>")
+
+
+def _remove_script_tags(html_content: str) -> str:
+    """Strip script blocks using an HTML parser instead of a fragile regex."""
+    stripper = _ScriptTagStripper()
+    stripper.feed(html_content)
+    stripper.close()
+    return "".join(stripper.parts)
 
 
 def prepare_html_for_email(html_content: str) -> str:
@@ -52,7 +121,7 @@ def prepare_html_for_email(html_content: str) -> str:
     cleaned = _EMAIL_TOC_RE.sub(r"\1", cleaned)
     cleaned = _EMAIL_DATA_ATTR_RE.sub("", cleaned)
     # 兜底移除任何残留脚本标签（兼容外部传入或旧版生成的 HTML 文件）
-    cleaned = _SCRIPT_TAG_RE.sub("", cleaned)
+    cleaned = _remove_script_tags(cleaned)
     # 压缩多余连续空行，进一步减小邮件体积
     cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
     return cleaned

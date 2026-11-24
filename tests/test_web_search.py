@@ -1027,5 +1027,28 @@ class EndToEndAndCLITests(unittest.TestCase):
             self.assertTrue(all(status in ("pass", "warn") for status, _, _ in checks), checks)
 
 
+class HtmlEmailSanitizationTests(unittest.TestCase):
+    """Email sanitization must handle browser-accepted script tag variants."""
+
+    def test_strips_script_tags_with_whitespace_and_uppercase(self):
+        from trendradar.report.html import prepare_html_for_email
+
+        html = (
+            "<!DOCTYPE html><html><body><p>keep</p>"
+            '<SCRIPT>alert("bad")</SCRIPT >'
+            '<script type="text/javascript">console.log("bad")</script\n>'
+            "<p>also keep</p></body></html>"
+        )
+
+        cleaned = prepare_html_for_email(html)
+
+        self.assertIn("<p>keep</p>", cleaned)
+        self.assertIn("<p>also keep</p>", cleaned)
+        self.assertNotIn("alert", cleaned)
+        self.assertNotIn("console.log", cleaned)
+        self.assertNotIn("<script", cleaned.lower())
+        self.assertNotIn("</script", cleaned.lower())
+
+
 if __name__ == "__main__":
     unittest.main()
