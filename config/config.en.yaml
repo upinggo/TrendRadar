@@ -1,10 +1,6 @@
 # ═══════════════════════════════════════════════════════════════
 #                   TrendRadar Configuration
-<<<<<<< HEAD
-#                      Version: 2.4.0
-=======
 #                      Version: 2.5.0
->>>>>>> upstream/master
 # ═══════════════════════════════════════════════════════════════
 
 
@@ -155,8 +151,6 @@ rss:
 
 
 # ===============================================================
-<<<<<<< HEAD
-=======
 # 3.5 Data Source - Web Search (search the web by your own topics)
 #
 # Stored and displayed separately from hot lists and RSS:
@@ -198,7 +192,6 @@ web_search:
 
 
 # ===============================================================
->>>>>>> upstream/master
 # 4. Report Mode
 # ===============================================================
 report:
@@ -278,30 +271,18 @@ display:
     - new_items                           # 1️⃣ New-items region
     - hotlist                             # 2️⃣ Hot-list region (keyword match / AI smart filter)
     - rss                                 # 3️⃣ RSS region
-<<<<<<< HEAD
-    - standalone                          # 4️⃣ Standalone region
-    - ai_analysis                         # 5️⃣ AI analysis region
-=======
     - web_search                          # 4️⃣ Web search region
     - standalone                          # 5️⃣ Standalone region
     - ai_analysis                         # 6️⃣ AI analysis region
->>>>>>> upstream/master
 
   # Push region toggles (used together with region_order above)
   regions:
     hotlist: true                     # Hot-list region: keyword match / AI smart filter (true=show, false=hide)
-<<<<<<< HEAD
-    new_items: false                  # New-items region: hot-list new + RSS new (true=show, false=hide)
-                                      # Note: the 🆕 new-marker in the hotspot-word stats is not affected by this
-
-    rss: true                         # RSS region (true=show and analyze, false=hide and skip analysis)
-=======
     new_items: false                  # New-items region: hot-list new + RSS new + web search new (true=show, false=hide)
                                       # Note: the 🆕 new-marker in the hotspot-word stats is not affected by this
 
     rss: true                         # RSS region (true=show and analyze, false=hide and skip analysis)
     web_search: true                  # Web search region (true=show, false=hide)
->>>>>>> upstream/master
     standalone: false                 # Standalone region: full hot-list/RSS, not subject to keyword filtering (true=show, false=hide)
     ai_analysis: true                 # AI analysis region (true=show, false=hide)
 
@@ -462,10 +443,7 @@ ai:
                                     # Example: ["openai/gpt-4o-mini", "openai/deepseek-ai/DeepSeek-V3"]
 
   # Extra params (usually no need to change; uncomment to enable)
-<<<<<<< HEAD
-=======
   # Passed through to LiteLLM as-is; useful for extra request params or headers
->>>>>>> upstream/master
   # extra_params:
   #   top_p: 1.0
   #   presence_penalty: 0.0
@@ -490,11 +468,8 @@ ai_analysis:
                                     # Hot lists take the quota first; RSS uses the remainder; standalone is not limited
 
   include_rss: false                # Include RSS content in analysis (true=include, false=exclude)
-<<<<<<< HEAD
-=======
   include_web_search: true          # Include web search results & summaries in analysis (true=include, false=exclude)
-  search_summary_max_chars: 300     # Max summary characters per web search result sent to AI
->>>>>>> upstream/master
+  search_summary_max_chars: 300     # Max summary chars per web search result sent to AI
   include_standalone: true          # Include standalone-region data (true=include, false=exclude)
 
   include_rank_timeline: true       # Rank-timeline detail level
@@ -521,10 +496,7 @@ ai_translation:
   scope:
     hotlist: false                  # Translate hot-list titles (true=translate, false=skip)
     rss: true                       # Translate RSS titles (true=translate, false=skip)
-<<<<<<< HEAD
-=======
     web_search: false               # Translate web search titles & snippets (true=translate, false=skip)
->>>>>>> upstream/master
     standalone: true                # Translate standalone-region titles (true=translate, false=skip)
 
 
@@ -552,8 +524,6 @@ advanced:
     use_proxy: false                  # Use proxy (true=on, false=off)
     proxy_url: ""                     # RSS-specific proxy (empty → use crawler.default_proxy)
 
-<<<<<<< HEAD
-=======
   # Web search technical settings
   web_search:
     request_interval: 1000            # Interval between search requests (ms)
@@ -561,8 +531,6 @@ advanced:
     max_retries: 2                    # Max retries on rate limit or timeout
     use_proxy: false                  # Use proxy (true=on, false=off)
     proxy_url: ""                     # Web-search-specific proxy (empty → use crawler.default_proxy)
-
->>>>>>> upstream/master
   # Sorting weights (used to re-rank hotlist items across platforms)
   # Must sum to 1
   weight:

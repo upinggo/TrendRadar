@@ -351,9 +351,6 @@ class AppContext:
             output_dir="output",
             date_folder=self.format_date(),
             time_filename=self.format_time(),
-<<<<<<< HEAD
-            render_html_func=lambda *args, **kwargs: self.render_html(*args, rss_items=rss_items, rss_new_items=rss_new_items, ai_analysis=ai_analysis, economic_analysis=economic_analysis, standalone_data=standalone_data, **kwargs),
-=======
             render_html_func=lambda *args, **kwargs: self.render_html(
                 *args,
                 rss_items=rss_items,
@@ -361,10 +358,10 @@ class AppContext:
                 search_items=search_items,
                 search_new_items=search_new_items,
                 ai_analysis=ai_analysis,
+                economic_analysis=economic_analysis,
                 standalone_data=standalone_data,
                 **kwargs,
             ),
->>>>>>> upstream/master
             report_metadata=report_metadata,
             translate_report_func=translate_report_func,
             raw_results=raw_results,
@@ -457,8 +454,7 @@ class AppContext:
         report_type: str = "热点分析报告",
         compact: bool = False,
     ) -> List[str]:
-<<<<<<< HEAD
-        """分批处理消息内容（支持热榜+RSS合并+AI分析+独立展示区）
+        """分批处理消息内容（支持热榜+RSS+联网搜索+经济分析合并推送+AI分析+独立展示区）
 
         Args:
             report_data: 报告数据
@@ -478,13 +474,10 @@ class AppContext:
         Returns:
             分批后的消息内容列表
         """
-=======
-        """分批处理消息内容（支持热榜+RSS+联网搜索合并+AI分析+独立展示区）"""
         if show_search_snippet is None:
             show_search_snippet = bool(
                 self.web_search_config.get("NOTIFICATION_SHOW_SNIPPET", False)
             )
->>>>>>> upstream/master
         return split_content_into_batches(
             report_data=report_data,
             format_type=format_type,

@@ -212,7 +212,15 @@ Pair Windows and macOS computers once to reconnect automatically on your local n
 - **Tip**: Check [Changelog] to understand specific [Features]
 
 
-<<<<<<< HEAD
+### 2026/11/21 - v6.12.0
+
+- **New 3rd Data Source — Scheduled Web Search**: Beyond trending hotlists and RSS feeds, TrendRadar can now actively search the web on your schedule for specific topics (policies, company news, open-source releases, official announcements). Results appear in a dedicated Web Search section without being filtered out by `frequency_words.txt` or AI filtering
+- **Quality & Relevance Filtering Funnel**: Powered by DeepSeek Search API by default (with an extensible multi-provider architecture), filtering wide recalls by relevance score (`min_score`), site authority (`min_authority`), freshness window, per-topic display cap, and cross-day deduplication — plus optional `smart` mode to distill plain-language prompts into crisp search queries (cached daily)
+- **Full Pipeline & Visual Editor Integration**: Web Search integrates with all push channels (Feishu, DingTalk, WeWork, Telegram, Email, etc.), adds a dedicated "Web Search Topic Insights" section to AI analysis, supports per-period toggling in `timeline.yaml`, and adds visual editing for `web_search` and `search_queries.txt` in the web editor
+- **Modern Minimalist HTML Report & Rank Timeline Popover**: Redesigned every section into crisp neutral cards with unified outline SVG icons (zero emojis); hover or click any hotlist rank pill to view an inverted-Y rank-change sparkline chart and timestamp breakdown (including off-list gaps); added glassmorphic header metric tooltips, click-to-jump navigation, and a frosted floating dock with reading-progress ring and clickable shortcuts panel
+- **Email-Safe HTML Sanitization**: Automatically strips scripts, dead buttons, and interactive overlays before emailing (reducing email size by ~70%+ to stay safely below Gmail's 102KB clipping limit) while expanding every topic and section vertically
+
+
 ### 2026/07/08 - Fork enhancement
 
 - **Treemap image push to notification channels**: New optional dependency `trendradar[image]` (cairosvg) rasterizes the report's keyword and economic-asset treemaps to PNGs and pushes them alongside the text messages on **Telegram / Email / WeCom / ntfy** (other channels stay text-only, no regression)
@@ -227,17 +235,6 @@ Pair Windows and macOS computers once to reconnect automatically on your local n
 - **Economic-asset treemap**: The economic-analysis section of the HTML report now renders a gain/loss heatmap — area weighted by |change %|, red-up / green-down, flat assets stay visible with a minimum area
 - **Trending keyword treemap across all platforms**: New `extract_trending_ngrams` extracts 2–4 char hot n-grams from all raw titles, rank-weighted per platform, with Chinese stopwords and same-headline-fragment / sliding-window substring de-duplication — no user keyword list required
 - **Squarified treemap layout**: In-house `_squarify` (Bruls et al.) produces rectangles with more balanced aspect ratios, adaptive font sizing / truncation, and auto-hidden text on tiny tiles
-
-### 2026/06/19 - v6.10.0
-=======
-### 2026/11/21 - v6.12.0
->>>>>>> upstream/master
-
-- **New 3rd Data Source — Scheduled Web Search**: Beyond trending hotlists and RSS feeds, TrendRadar can now actively search the web on your schedule for specific topics (policies, company news, open-source releases, official announcements). Results appear in a dedicated Web Search section without being filtered out by `frequency_words.txt` or AI filtering
-- **Quality & Relevance Filtering Funnel**: Powered by DeepSeek Search API by default (with an extensible multi-provider architecture), filtering wide recalls by relevance score (`min_score`), site authority (`min_authority`), freshness window, per-topic display cap, and cross-day deduplication — plus optional `smart` mode to distill plain-language prompts into crisp search queries (cached daily)
-- **Full Pipeline & Visual Editor Integration**: Web Search integrates with all push channels (Feishu, DingTalk, WeWork, Telegram, Email, etc.), adds a dedicated "Web Search Topic Insights" section to AI analysis, supports per-period toggling in `timeline.yaml`, and adds visual editing for `web_search` and `search_queries.txt` in the web editor
-- **Modern Minimalist HTML Report & Rank Timeline Popover**: Redesigned every section into crisp neutral cards with unified outline SVG icons (zero emojis); hover or click any hotlist rank pill to view an inverted-Y rank-change sparkline chart and timestamp breakdown (including off-list gaps); added glassmorphic header metric tooltips, click-to-jump navigation, and a frosted floating dock with reading-progress ring and clickable shortcuts panel
-- **Email-Safe HTML Sanitization**: Automatically strips scripts, dead buttons, and interactive overlays before emailing (reducing email size by ~70%+ to stay safely below Gmail's 102KB clipping limit) while expanding every topic and section vertically
 
 ### 2026/11/21 - mcp-v4.2.0
 

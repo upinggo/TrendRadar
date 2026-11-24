@@ -156,10 +156,7 @@ const MODULE_DEFS = [
     { id: 1, nameKey: "mod.app", key: "app", editable: false },
     { id: 2, nameKey: "mod.platforms", key: "platforms", editable: true },
     { id: 3, nameKey: "mod.rss", key: "rss", editable: true },
-<<<<<<< HEAD
-=======
     { id: "3.5", nameKey: "mod.web_search", key: "web_search", editable: true },
->>>>>>> upstream/master
     { id: 4, nameKey: "mod.report", key: "report", editable: true },
     { id: "4.5", nameKey: "mod.filter", key: "filter", editable: true },
     { id: "4.6", nameKey: "mod.ai_filter", key: "ai_filter", editable: true },
@@ -172,12 +169,7 @@ const MODULE_DEFS = [
     { id: 11, nameKey: "mod.advanced", key: "advanced", editable: false }
 ];
 
-<<<<<<< HEAD
-// 初始默认内容 (用于空状态) - 只显示提示文本
-function getInitialYaml() { return t('init.configPlaceholder'); }
-=======
 // 旧版占位符（用于识别历史缓存）
->>>>>>> upstream/master
 const INITIAL_YAML = `# 在此粘贴你的 config.yaml...
 # 或拖拽文件到编辑器区域
 # 或点击右上角"加载官网最新配置"`;
@@ -229,10 +221,7 @@ function remoteConfigPath(type) {
     const names = {
         config: 'config/config' + suffix + '.yaml',
         frequency: 'config/frequency_words' + suffix + '.txt',
-<<<<<<< HEAD
-=======
         search: 'config/search_queries' + suffix + '.txt',
->>>>>>> upstream/master
         timeline: 'config/timeline' + suffix + '.yaml'
     };
     return names[type];
@@ -323,11 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentYaml = savedConfig;
         showToast(t('toast.configRestored'), 'info');
     } else {
-<<<<<<< HEAD
-        const initYaml = getInitialYaml();
-=======
         const initYaml = getDefaultYaml();
->>>>>>> upstream/master
         yamlEditor.value = initYaml;
         currentYaml = initYaml;
     }
@@ -506,11 +491,7 @@ function initDragAndDrop(editor, type) {
         <div class="drop-overlay-content">
             <i class="fa-solid fa-cloud-arrow-up text-4xl mb-2"></i>
             <div class="text-sm font-bold">${t('init.releaseToLoad')}</div>
-<<<<<<< HEAD
-            <div class="text-xs opacity-75">${type === 'config' ? 'config.yaml' : type === 'timeline' ? 'timeline.yaml' : 'frequency_words.txt'}</div>
-=======
             <div class="text-xs opacity-75">${dropFileName}</div>
->>>>>>> upstream/master
         </div>
     `;
     container.style.position = 'relative';
@@ -591,10 +572,7 @@ function handleFileDrop(e, type) {
                 currentYaml = content;
                 updateBackdrop('yaml-editor', 'yaml-backdrop');
                 syncYamlToUI();
-<<<<<<< HEAD
-=======
                 debounceSaveConfig();
->>>>>>> upstream/master
                 showToast(t('toast.loaded') + file.name, 'success');
             } catch (err) {
                 showToast(t('toast.yamlError') + err.message, 'error');
@@ -610,10 +588,7 @@ function handleFileDrop(e, type) {
                 currentTimeline = content;
                 updateBackdrop('timeline-editor', 'timeline-backdrop');
                 syncTimelineToUI();
-<<<<<<< HEAD
-=======
                 debounceSaveTimeline();
->>>>>>> upstream/master
                 showToast(t('toast.loaded') + file.name, 'success');
             } catch (err) {
                 showToast(t('toast.yamlError') + err.message, 'error');
@@ -635,10 +610,7 @@ function handleFileDrop(e, type) {
             currentFrequencyData = null;
             updateBackdrop('frequency-editor', 'frequency-backdrop');
             syncFrequencyToUI();
-<<<<<<< HEAD
-=======
             debounceSaveFrequency();
->>>>>>> upstream/master
             showToast(t('toast.loaded') + file.name, 'success');
         }
     };
@@ -860,11 +832,7 @@ window.confirmLoadConfig = async function() {
     const loadSearch = document.getElementById('load-search-txt')?.checked;
     const loadTimeline = document.getElementById('load-timeline-yaml')?.checked;
 
-<<<<<<< HEAD
-    if (!loadConfig && !loadFrequency && !loadTimeline) {
-=======
     if (!loadConfig && !loadFrequency && !loadSearch && !loadTimeline) {
->>>>>>> upstream/master
         showToast(t('toast.selectOneFile'), 'warning');
         return;
     }
@@ -876,10 +844,7 @@ window.confirmLoadConfig = async function() {
         const promises = [];
         if (loadConfig) promises.push(fetchWithFallback(remoteConfigUrl('config')).then(r => ({ type: 'config', res: r })));
         if (loadFrequency) promises.push(fetchWithFallback(remoteConfigUrl('frequency')).then(r => ({ type: 'frequency', res: r })));
-<<<<<<< HEAD
-=======
         if (loadSearch) promises.push(fetchWithFallback(remoteConfigUrl('search')).then(r => ({ type: 'search', res: r })));
->>>>>>> upstream/master
         if (loadTimeline) promises.push(fetchWithFallback(remoteConfigUrl('timeline')).then(r => ({ type: 'timeline', res: r })));
 
         const results = await Promise.all(promises);
@@ -933,10 +898,7 @@ window.confirmLoadConfig = async function() {
         const loadedFiles = [];
         if (loadConfig) loadedFiles.push(remoteConfigName('config'));
         if (loadFrequency) loadedFiles.push(remoteConfigName('frequency'));
-<<<<<<< HEAD
-=======
         if (loadSearch) loadedFiles.push(remoteConfigName('search'));
->>>>>>> upstream/master
         if (loadTimeline) loadedFiles.push(remoteConfigName('timeline'));
         showToast(t('toast.loaded') + loadedFiles.join(', '), 'success');
 
@@ -1185,8 +1147,6 @@ function renderControls(mod) {
             html += `<div class="text-xs text-orange-600 mt-2 p-2 bg-orange-50 rounded border border-orange-200">
                         <i class="fa-solid fa-triangle-exclamation mr-1"></i>
                         <strong>${t('common.warning')}</strong>${t('ctrl.rssWarning')}
-<<<<<<< HEAD
-=======
                      </div>`;
             break;
         case "web_search":
@@ -1295,7 +1255,6 @@ function renderControls(mod) {
                             ${createToggleControl(mod.key, "web_search.use_proxy", t('ctrl.wsUseProxy'), "advanced")}
                             ${createInputControl(mod.key, "web_search.proxy_url", t('ctrl.wsProxyUrl'), "text", t('ctrl.wsProxyPlaceholder'), "advanced")}
                         </div>
->>>>>>> upstream/master
                      </div>`;
             break;
         case "report":
@@ -1391,11 +1350,8 @@ function renderControls(mod) {
             html += createSelectControl(mod.key, "mode", t('ctrl.aiAnalysisMode'), ["follow_report", "daily", "current", "incremental"]);
             html += createNumberControl(mod.key, "max_news_for_analysis", t('ctrl.maxNewsForAnalysis'));
             html += createToggleControl(mod.key, "include_rss", t('ctrl.includeRss'));
-<<<<<<< HEAD
-=======
             html += createToggleControl(mod.key, "include_web_search", t('ctrl.includeWebSearch'));
             html += createNumberControl(mod.key, "search_summary_max_chars", t('ctrl.searchSummaryMaxChars'), { min: 0, step: 50 });
->>>>>>> upstream/master
             html += createToggleControl(mod.key, "include_standalone", t('ctrl.includeStandalone'));
             html += createToggleControl(mod.key, "include_rank_timeline", t('ctrl.includeRankTimeline'));
             break;
@@ -1405,8 +1361,6 @@ function renderControls(mod) {
             html += createInputControl(mod.key, "prompt_file", t('ctrl.promptConfigFile'));
             html += createNumberControl(mod.key, "batch_size", t('ctrl.translationBatchSize'));
             html += createNumberControl(mod.key, "batch_interval", t('ctrl.batchInterval'));
-<<<<<<< HEAD
-=======
             html += `<div class="border-t border-gray-200 pt-3 mt-3 space-y-2.5">
                         <div class="text-xs font-bold text-gray-700">${t('ctrl.translationScope')}</div>
                         ${createToggleControl(mod.key, "scope.hotlist", t('ctrl.transScopeHotlist'))}
@@ -1417,7 +1371,6 @@ function renderControls(mod) {
                             <i class="fa-solid fa-info-circle mr-1"></i>${t('ctrl.translationScopeHint')}
                         </div>
                      </div>`;
->>>>>>> upstream/master
             break;
     }
 
@@ -1862,11 +1815,7 @@ function createInputControl(mod, path, label, type = "text", placeholder = null,
     return `
         <div>
             <label class="block text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-1">${label}</label>
-<<<<<<< HEAD
-            <input type="${type}" data-path="${path}" class="bg-white border-gray-300 focus:border-blue-500" placeholder="${t('tl.notSet')}">
-=======
             <input type="${type}" data-path="${path}"${modAttr} class="bg-white border-gray-300 focus:border-blue-500" placeholder="${ph}">
->>>>>>> upstream/master
         </div>
     `;
 }
@@ -1962,11 +1911,7 @@ window.resetToDefault = function() {
     if (confirm(t('confirm.reset'))) {
         if (currentTab === 'config') {
             const yamlEditor = document.getElementById('yaml-editor');
-<<<<<<< HEAD
-            const initYaml = getInitialYaml();
-=======
             const initYaml = getDefaultYaml();
->>>>>>> upstream/master
             yamlEditor.value = initYaml;
             currentYaml = initYaml;
             updateBackdrop('yaml-editor', 'yaml-backdrop');
@@ -2067,12 +2012,9 @@ window.switchTab = function(tab) {
     } else if (tab === 'frequency') {
         document.getElementById('right-panel-title').textContent = t('panel.frequencyEdit');
         if (versionBtn) { versionBtn.style.display = ''; versionBtn.title = t('panel.versionCheck') + " frequency_words.txt"; }
-<<<<<<< HEAD
-=======
     } else if (tab === 'search') {
         document.getElementById('right-panel-title').textContent = t('panel.searchEdit');
         if (versionBtn) versionBtn.style.display = 'none';
->>>>>>> upstream/master
     } else {
         document.getElementById('right-panel-title').textContent = t('panel.timelineSchedule');
         if (versionBtn) versionBtn.style.display = 'none';
@@ -3317,10 +3259,7 @@ const DISPLAY_REGIONS_DEF = [
     { key: "hotlist", labelKey: "region.hotlist" },
     { key: "new_items", labelKey: "region.new_items" },
     { key: "rss", labelKey: "region.rss" },
-<<<<<<< HEAD
-=======
     { key: "web_search", labelKey: "region.web_search" },
->>>>>>> upstream/master
     { key: "standalone", labelKey: "region.standalone" },
     { key: "ai_analysis", labelKey: "region.ai_analysis" }
 ];
@@ -4370,9 +4309,6 @@ window.updateToLatest = async function() {
     closeVersionModal();
 
     const currentTab = getCurrentTab();
-<<<<<<< HEAD
-    const type = currentTab === 'config' ? 'config' : currentTab === 'timeline' ? 'timeline' : 'frequency';
-=======
     const type = currentTab === 'config'
         ? 'config'
         : currentTab === 'search'
@@ -4380,7 +4316,6 @@ window.updateToLatest = async function() {
         : currentTab === 'timeline'
         ? 'timeline'
         : 'frequency';
->>>>>>> upstream/master
     const fileName = remoteConfigName(type);
 
     if (!confirm(t('confirm.updateFile', fileName))) {
@@ -4742,13 +4677,9 @@ function showTlTooltip(event, name, start, end, push, analyze, mode, searchState
     let features = [];
     if (push) features.push('<span style="color:#93c5fd">' + t('tl.legend.push') + '</span>');
     if (analyze) features.push('<span style="color:#c4b5fd">' + t('tl.legend.analyze') + '</span>');
-<<<<<<< HEAD
-    if (!push && !analyze) features.push('<span style="color:#94a3b8">' + t('tl.legend.collect') + '</span>');
-=======
     if (searchState === 'true') features.push('<span style="color:#6ee7b7">' + t('tl.legend.searchOn') + '</span>');
     if (searchState === 'false') features.push('<span style="color:#fca5a5">' + t('tl.legend.searchOff') + '</span>');
     if (!push && !analyze && searchState !== 'true') features.push('<span style="color:#94a3b8">' + t('tl.legend.collect') + '</span>');
->>>>>>> upstream/master
 
     el.innerHTML = `<div style="font-weight:700;margin-bottom:2px">${name}</div>
         <div style="font-size:11px;color:#9ca3af">${start} - ${end}</div>
@@ -5025,14 +4956,11 @@ function renderBehaviorToggles(cfg, presetName, periodKey, rawCfg = null) {
         <input type="checkbox" ${oncePush ? 'checked' : ''}
                onchange="onTlToggle('${presetName}','${periodKey}','once.push',this.checked)"
                class="w-3 h-3 rounded">${t('tl.pushOnce')}
-<<<<<<< HEAD
-=======
     </label>`;
     html += `<label class="flex items-center gap-1 text-[10px] ${onceSearch ? 'text-emerald-600' : 'text-gray-400'}" style="cursor:pointer">
         <input type="checkbox" ${onceSearch ? 'checked' : ''}
                onchange="onTlToggle('${presetName}','${periodKey}','once.search',this.checked)"
                class="w-3 h-3 rounded">${t('tl.searchOnce')}
->>>>>>> upstream/master
     </label>`;
 
     html += `</div>`;
@@ -5054,14 +4982,10 @@ function renderBehaviorToggles(cfg, presetName, periodKey, rawCfg = null) {
     const filterMethod = baseCfg.filter_method || '';
     const frequencyFile = baseCfg.frequency_file || '';
     const interestsFile = baseCfg.interests_file || '';
-<<<<<<< HEAD
-    const methodHint = periodKey === 'default' ? t('tl.filterMethodHint.default') : t('tl.filterMethodHint.period');
-=======
     const searchOverride = baseCfg.search === true ? 'true' : baseCfg.search === false ? 'false' : '';
     const searchFile = baseCfg.search_file || '';
     const methodHint = periodKey === 'default' ? t('tl.filterMethodHint.default') : t('tl.filterMethodHint.period');
     const searchDefaultLabel = periodKey === 'default' ? t('tl.searchFollowCollect') : t('tl.searchInherit');
->>>>>>> upstream/master
 
     html += `<div class="mt-3 pt-3 border-t border-gray-100">
         <div class="text-[10px] uppercase tracking-wider font-bold text-gray-400 mb-2">${t('tl.filterOverride')}</div>
@@ -5077,21 +5001,13 @@ function renderBehaviorToggles(cfg, presetName, periodKey, rawCfg = null) {
             </div>
             <div>
                 <label class="block text-[10px] text-gray-400 mb-1">frequency_file</label>
-<<<<<<< HEAD
-                <input type="text" value="${frequencyFile}" placeholder="e.g. tech.txt"
-=======
                 <input type="text" value="${escapeAttr(frequencyFile)}" placeholder="e.g. tech.txt"
->>>>>>> upstream/master
                        class="text-[10px] w-full border border-gray-200 rounded px-1.5 py-1 bg-white"
                        onchange="onTlOptionalInput('${presetName}','${periodKey}','frequency_file',this.value)">
             </div>
             <div>
                 <label class="block text-[10px] text-gray-400 mb-1">interests_file</label>
-<<<<<<< HEAD
-                <input type="text" value="${interestsFile}" placeholder="e.g. geopolitics.txt"
-=======
                 <input type="text" value="${escapeAttr(interestsFile)}" placeholder="e.g. geopolitics.txt"
->>>>>>> upstream/master
                        class="text-[10px] w-full border border-gray-200 rounded px-1.5 py-1 bg-white"
                        onchange="onTlOptionalInput('${presetName}','${periodKey}','interests_file',this.value)">
             </div>
@@ -5114,12 +5030,8 @@ function renderBehaviorToggles(cfg, presetName, periodKey, rawCfg = null) {
             </div>
         </div>
         <div class="text-[10px] text-gray-400 mt-2">
-<<<<<<< HEAD
-            <i class="fa-solid fa-lightbulb mr-1"></i>${methodHint}${t('tl.filterFileHint')}
-=======
             <i class="fa-solid fa-lightbulb mr-1"></i>${methodHint}${t('tl.filterFileHint')}<br>
             <i class="fa-solid fa-magnifying-glass mr-1 text-emerald-500"></i>${t('tl.searchOverrideHint')}
->>>>>>> upstream/master
         </div>
     </div>`;
 

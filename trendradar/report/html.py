@@ -1276,7 +1276,6 @@ def render_html_content(
                 /* 默认无边框，由 section-divider 动态添加 */
             }
 
-<<<<<<< HEAD
             /* ===== Treemap 可视化 ===== */
             .treemap-block {
                 margin: 0 0 20px 0;
@@ -1346,7 +1345,6 @@ def render_html_content(
                     display: block;
                 }
             }
-=======
             /* 通用板块头部图标徽章与计数胶囊 */
             .section-heading-left {
                 display: inline-flex;
@@ -1417,7 +1415,6 @@ def render_html_content(
             .group-dot.dot-search { background-color: #f59e0b; }
             .group-dot.dot-standalone { background-color: #0d9488; }
             .group-dot.dot-new { background-color: #f43f5e; }
->>>>>>> upstream/master
 
             .new-section {
                 margin-top: 32px;
@@ -4418,16 +4415,6 @@ def render_html_content(
         # 生成 tab 栏（2+ 分组时，仅浏览器宽屏显示，邮件自动剔除）
         if len(all_groups) >= 2:
             standalone_html += """
-<<<<<<< HEAD
-                    <div class="tab-bar standalone-tab-bar">"""
-            standalone_html += f"""
-                        <button class="tab-btn active" data-standalone-tab="all">全部<span class="tab-count">{total_count}</span></button>"""
-            for idx, g in enumerate(all_groups):
-                standalone_html += f"""
-                        <button class="tab-btn" data-standalone-tab="{idx}">{html_escape(g["name"])}<span class="tab-count">{g["count"]}</span></button>"""
-            standalone_html += """
-                    </div>"""
-=======
                     <!--EMAIL_STRIP_START--><div class="tab-bar standalone-tab-bar">"""
             for idx, g in enumerate(all_groups):
                 active = ' active' if idx == 0 else ''
@@ -4436,7 +4423,6 @@ def render_html_content(
             standalone_html += f"""
                         <button class="tab-btn" data-standalone-tab="all">全部<span class="tab-count">{total_count}</span></button>
                     </div><!--EMAIL_STRIP_END-->"""
->>>>>>> upstream/master
 
         standalone_html += """
                     <div class="standalone-groups-grid">"""

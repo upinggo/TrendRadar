@@ -45,10 +45,7 @@
     add([
         ['panel.configModules', '配置模块', 'Config Modules'],
         ['panel.frequencyEdit', '频率词编辑', 'Keyword Editing'],
-<<<<<<< HEAD
-=======
         ['panel.searchEdit', '联网搜索任务', 'Web Search Topics'],
->>>>>>> upstream/master
         ['panel.timelineSchedule', '时间线调度', 'Timeline Schedule'],
         ['panel.versionCheck', '版本检测', 'Check Version'],
         ['panel.readOnly', '只读 (请在左侧编辑)', 'Read-only (edit on the left)'],
@@ -61,10 +58,7 @@
         ['mod.app', '1. 基础设置', '1. Basic Settings'],
         ['mod.platforms', '2. 数据源 - 热榜平台', '2. Data Source - Hot Platforms'],
         ['mod.rss', '3. 数据源 - RSS 订阅', '3. Data Source - RSS Feeds'],
-<<<<<<< HEAD
-=======
         ['mod.web_search', '3.5 数据源 - 联网搜索', '3.5 Data Source - Web Search'],
->>>>>>> upstream/master
         ['mod.report', '4. 报告模式', '4. Report Mode'],
         ['mod.filter', '4.5 筛选策略', '4.5 Filter Strategy'],
         ['mod.ai_filter', '4.6 AI 智能筛选', '4.6 AI Smart Filter'],
@@ -98,8 +92,6 @@
         ['ctrl.rssLibHint', '(内附 RSS 源参考库)', '(RSS feed reference library included)'],
         ['ctrl.rssWarning', '部分海外媒体内容可能涉及敏感话题，AI 模型可能拒绝翻译或分析，建议根据实际需求筛选订阅源。', 'Some overseas media may involve sensitive topics. AI models may refuse to translate or analyze. Filter feeds based on actual needs.'],
 
-<<<<<<< HEAD
-=======
         // Web Search
         ['ctrl.enableWebSearch', '开启联网搜索', 'Enable Web Search'],
         ['ctrl.wsIntro', '按你写的主题主动搜全网，结果独立展示，不会被频率词二次过滤。', 'Actively searches the web for topics you define. Results are shown separately without being re-filtered by keywords.'],
@@ -157,7 +149,6 @@
         ['ctrl.wsProxyPlaceholder', '例如 http://127.0.0.1:10801', 'e.g. http://127.0.0.1:10801'],
         ['ctrl.togglePassword', '显示/隐藏密钥', 'Show/Hide key'],
 
->>>>>>> upstream/master
         // Report
         ['ctrl.reportMode', '报告模式', 'Report Mode'],
         ['ctrl.displayMode', '分组维度', 'Group Dimension'],
@@ -211,11 +202,8 @@
         ['ctrl.aiAnalysisMode', 'AI 分析模式', 'AI Analysis Mode'],
         ['ctrl.maxNewsForAnalysis', '最大分析条数', 'Max items for analysis'],
         ['ctrl.includeRss', '包含 RSS 内容', 'Include RSS content'],
-<<<<<<< HEAD
-=======
         ['ctrl.includeWebSearch', '包含联网搜索结果（含摘要）', 'Include web search results (with snippets)'],
         ['ctrl.searchSummaryMaxChars', '每条搜索结果发给 AI 的最大摘要字数', 'Max summary chars per search item for AI'],
->>>>>>> upstream/master
         ['ctrl.includeStandalone', '包含独立展示区数据', 'Include standalone data'],
         ['ctrl.includeRankTimeline', '传递完整排名时间线', 'Pass full rank timeline'],
 
@@ -223,15 +211,12 @@
         ['ctrl.enableTranslation', '开启 AI 自动翻译', 'Enable AI auto-translation'],
         ['ctrl.targetLanguage', '目标语言', 'Target Language'],
         ['ctrl.translationBatchSize', '每批翻译标题数', 'Titles per translation batch'],
-<<<<<<< HEAD
-=======
         ['ctrl.translationScope', '翻译范围', 'Translation Scope'],
         ['ctrl.translationScopeHint', '若推送内容控制中关闭了某个区域，这里开启也不会翻译。', 'Regions turned off in Push Content Control will not be translated even if enabled here.'],
         ['ctrl.transScopeHotlist', '翻译热榜标题', 'Translate hot list titles'],
         ['ctrl.transScopeRss', '翻译 RSS 标题', 'Translate RSS titles'],
         ['ctrl.transScopeWebSearch', '翻译联网搜索标题与摘要（搜外文时建议开启）', 'Translate web search titles & snippets'],
         ['ctrl.transScopeStandalone', '翻译独立展示区标题', 'Translate standalone titles'],
->>>>>>> upstream/master
     ]);
 
     // ═══════════════════════════════════════
@@ -241,10 +226,7 @@
         ['region.hotlist', '热榜区域', 'Hot List'],
         ['region.new_items', '新增热点区域', 'New Items'],
         ['region.rss', 'RSS 订阅区域', 'RSS Feeds'],
-<<<<<<< HEAD
-=======
         ['region.web_search', '联网搜索区域', 'Web Search'],
->>>>>>> upstream/master
         ['region.standalone', '独立展示区', 'Standalone'],
         ['region.ai_analysis', 'AI 分析区域', 'AI Analysis'],
     ]);
@@ -328,10 +310,7 @@
         ['loadModal.desc', '选择要从 GitHub 加载的配置文件：', 'Select config files to load from GitHub:'],
         ['loadModal.configDesc', '系统配置、平台、AI、通知等', 'System config, platforms, AI, notifications, etc.'],
         ['loadModal.frequencyDesc', '关键词组、过滤规则、正则逻辑', 'Keyword groups, filter rules, regex logic'],
-<<<<<<< HEAD
-=======
         ['loadModal.searchDesc', '联网搜索主题、搜索词与全局屏蔽规则', 'Web search topics, queries & global exclusions'],
->>>>>>> upstream/master
         ['loadModal.timelineDesc', '调度时间线、预设模板、自定义时间段', 'Scheduling timeline, presets, custom periods'],
         ['loadModal.source', '数据来源：', 'Data source: '],
         ['loadModal.cancel', '取消', 'Cancel'],
@@ -571,10 +550,6 @@
         ['tl.aiMode', 'AI:', 'AI:'],
         ['tl.analyzeOnce', '仅分析一次', 'Analyze once'],
         ['tl.pushOnce', '仅推送一次', 'Push once'],
-<<<<<<< HEAD
-        ['tl.time', '时间:', 'Time:'],
-        ['tl.filterOverride', '筛选覆盖（可选）', 'Filter Override (optional)'],
-=======
         ['tl.searchOnce', '仅搜一次', 'Search once'],
         ['tl.time', '时间:', 'Time:'],
         ['tl.filterOverride', '筛选与联网搜索覆盖（可选）', 'Filter & Web Search Override (optional)'],
@@ -588,7 +563,6 @@
         ['tl.searchOverrideHint', '联网搜索不填则默认跟随“采集”开关；自定义任务文件从 config/custom/search/ 查找，留空恢复默认。', 'Web search follows Collect when unset; custom search_file resolves from config/custom/search/ (empty restores default).'],
         ['tl.legend.searchOn', '联网搜索', 'Web Search'],
         ['tl.legend.searchOff', '跳过搜索', 'Skip Search'],
->>>>>>> upstream/master
         ['tl.inherit', '继承', 'Inherit'],
         ['tl.emptyDayPlan', '空 (全天走 default)', 'Empty (default all day)'],
         ['tl.notSet', '(未设置)', '(not set)'],
@@ -649,8 +623,6 @@
     ]);
 
     // ═══════════════════════════════════════
-<<<<<<< HEAD
-=======
     //  Search Queries Editor
     // ═══════════════════════════════════════
     add([
@@ -702,7 +674,6 @@
     ]);
 
     // ═══════════════════════════════════════
->>>>>>> upstream/master
     //  Common / Misc
     // ═══════════════════════════════════════
     add([
@@ -764,10 +735,7 @@
         updateLangToggleUI();
         if (typeof renderModules === 'function') renderModules();
         if (typeof syncYamlToUI === 'function') syncYamlToUI();
-<<<<<<< HEAD
-=======
         if (typeof onLanguageSwitched === 'function') onLanguageSwitched(lang);
->>>>>>> upstream/master
         if (typeof switchTab === 'function') switchTab(typeof currentTab !== 'undefined' ? currentTab : 'config');
     };
 

@@ -138,11 +138,8 @@ class AIAnalyzer:
         platforms: Optional[List[str]] = None,
         keywords: Optional[List[str]] = None,
         standalone_data: Optional[Dict] = None,
-<<<<<<< HEAD
         economic_analysis: Optional[Any] = None,
-=======
         search_stats: Optional[List[Dict]] = None,
->>>>>>> upstream/master
     ) -> AIAnalysisResult:
         """
         执行 AI 分析
@@ -823,21 +820,13 @@ class AIAnalyzer:
 
         # 解析成功，提取字段
         try:
-<<<<<<< HEAD
-            result.core_trends = data.get("core_trends", "")
-            result.sentiment_controversy = data.get("sentiment_controversy", "")
-            result.signals = data.get("signals", "")
-            result.rss_insights = data.get("rss_insights", "")
-            result.outlook_strategy = data.get("outlook_strategy", "")
-            result.macro_conclusion = data.get("macro_conclusion", "")
-=======
             result.core_trends = _coerce_analysis_text(data.get("core_trends", ""))
             result.sentiment_controversy = _coerce_analysis_text(data.get("sentiment_controversy", ""))
             result.signals = _coerce_analysis_text(data.get("signals", ""))
             result.rss_insights = _coerce_analysis_text(data.get("rss_insights", ""))
             result.search_insights = _coerce_analysis_text(data.get("search_insights", ""))
             result.outlook_strategy = _coerce_analysis_text(data.get("outlook_strategy", ""))
->>>>>>> upstream/master
+            result.macro_conclusion = _coerce_analysis_text(data.get("macro_conclusion", ""))
 
             # 解析独立展示区概括
             summaries = data.get("standalone_summaries", {})

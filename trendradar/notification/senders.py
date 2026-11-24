@@ -159,13 +159,10 @@ def send_to_feishu(
     economic_analysis: Any = None,
     display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
-<<<<<<< HEAD
     compact: bool = False,
-=======
     search_items: Optional[list] = None,
     search_new_items: Optional[list] = None,
     show_search_snippet: bool = False,
->>>>>>> upstream/master
 ) -> bool:
     """
     发送到飞书（支持分批发送，支持热榜+RSS+联网搜索合并+独立展示区）
@@ -219,13 +216,10 @@ def send_to_feishu(
         standalone_data=standalone_data,
         ai_stats=ai_stats,
         report_type=report_type,
-<<<<<<< HEAD
         compact=compact,
-=======
         search_items=search_items,
         search_new_items=search_new_items,
         show_search_snippet=show_search_snippet,
->>>>>>> upstream/master
     )
 
     # 统一添加批次头部（已预留空间，不会超限）
@@ -312,13 +306,10 @@ def send_to_dingtalk(
     economic_analysis: Any = None,
     display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
-<<<<<<< HEAD
     compact: bool = False,
-=======
     search_items: Optional[list] = None,
     search_new_items: Optional[list] = None,
     show_search_snippet: bool = False,
->>>>>>> upstream/master
 ) -> bool:
     """
     发送到钉钉（支持分批发送，支持热榜+RSS+联网搜索合并+独立展示区）
@@ -371,13 +362,10 @@ def send_to_dingtalk(
         standalone_data=standalone_data,
         ai_stats=ai_stats,
         report_type=report_type,
-<<<<<<< HEAD
         compact=compact,
-=======
         search_items=search_items,
         search_new_items=search_new_items,
         show_search_snippet=show_search_snippet,
->>>>>>> upstream/master
     )
 
     # 统一添加批次头部（已预留空间，不会超限）
@@ -449,14 +437,11 @@ def send_to_wework(
     economic_analysis: Any = None,
     display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
-<<<<<<< HEAD
     compact: bool = False,
     treemap_pngs: Optional[Dict[str, bytes]] = None,
-=======
     search_items: Optional[list] = None,
     search_new_items: Optional[list] = None,
     show_search_snippet: bool = False,
->>>>>>> upstream/master
 ) -> bool:
     """
     发送到企业微信（支持分批发送，支持 markdown 和 text 两种格式，支持热榜+RSS+联网搜索合并+独立展示区）
@@ -517,13 +502,10 @@ def send_to_wework(
         standalone_data=standalone_data,
         ai_stats=ai_stats,
         report_type=report_type,
-<<<<<<< HEAD
         compact=compact,
-=======
         search_items=search_items,
         search_new_items=search_new_items,
         show_search_snippet=show_search_snippet,
->>>>>>> upstream/master
     )
 
     # 统一添加批次头部（已预留空间，不会超限）
@@ -605,14 +587,11 @@ def send_to_telegram(
     economic_analysis: Any = None,
     display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
-<<<<<<< HEAD
     compact: bool = False,
     treemap_pngs: Optional[Dict[str, bytes]] = None,
-=======
     search_items: Optional[list] = None,
     search_new_items: Optional[list] = None,
     show_search_snippet: bool = False,
->>>>>>> upstream/master
 ) -> bool:
     """
     发送到 Telegram（支持分批发送，支持热榜+RSS+联网搜索合并+独立展示区）
@@ -664,13 +643,10 @@ def send_to_telegram(
         standalone_data=standalone_data,
         ai_stats=ai_stats,
         report_type=report_type,
-<<<<<<< HEAD
         compact=compact,
-=======
         search_items=search_items,
         search_new_items=search_new_items,
         show_search_snippet=show_search_snippet,
->>>>>>> upstream/master
     )
 
     # 统一添加批次头部（已预留空间，不会超限）
@@ -968,14 +944,11 @@ def send_to_ntfy(
     economic_analysis: Any = None,
     display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
-<<<<<<< HEAD
     compact: bool = False,
     treemap_pngs: Optional[Dict[str, bytes]] = None,
-=======
     search_items: Optional[list] = None,
     search_new_items: Optional[list] = None,
     show_search_snippet: bool = False,
->>>>>>> upstream/master
 ) -> bool:
     """
     发送到 ntfy（支持分批发送，严格遵守4KB限制，支持热榜+RSS+联网搜索合并+独立展示区）
@@ -1050,13 +1023,10 @@ def send_to_ntfy(
         standalone_data=standalone_data,
         ai_stats=ai_stats,
         report_type=report_type,
-<<<<<<< HEAD
         compact=compact,
-=======
         search_items=search_items,
         search_new_items=search_new_items,
         show_search_snippet=show_search_snippet,
->>>>>>> upstream/master
     )
 
     # 统一添加批次头部（已预留空间，不会超限）
@@ -1217,13 +1187,10 @@ def send_to_bark(
     economic_analysis: Any = None,
     display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
-<<<<<<< HEAD
     compact: bool = False,
-=======
     search_items: Optional[list] = None,
     search_new_items: Optional[list] = None,
     show_search_snippet: bool = False,
->>>>>>> upstream/master
 ) -> bool:
     """
     发送到 Bark（支持分批发送，使用 markdown 格式，支持热榜+RSS+联网搜索合并+独立展示区）
@@ -1283,13 +1250,10 @@ def send_to_bark(
         standalone_data=standalone_data,
         ai_stats=ai_stats,
         report_type=report_type,
-<<<<<<< HEAD
         compact=compact,
-=======
         search_items=search_items,
         search_new_items=search_new_items,
         show_search_snippet=show_search_snippet,
->>>>>>> upstream/master
     )
 
     # 统一添加批次头部（已预留空间，不会超限）
@@ -1399,13 +1363,10 @@ def send_to_slack(
     economic_analysis: Any = None,
     display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
-<<<<<<< HEAD
     compact: bool = False,
-=======
     search_items: Optional[list] = None,
     search_new_items: Optional[list] = None,
     show_search_snippet: bool = False,
->>>>>>> upstream/master
 ) -> bool:
     """
     发送到 Slack（支持分批发送，使用 mrkdwn 格式，支持热榜+RSS+联网搜索合并+独立展示区）
@@ -1454,13 +1415,10 @@ def send_to_slack(
         standalone_data=standalone_data,
         ai_stats=ai_stats,
         report_type=report_type,
-<<<<<<< HEAD
         compact=compact,
-=======
         search_items=search_items,
         search_new_items=search_new_items,
         show_search_snippet=show_search_snippet,
->>>>>>> upstream/master
     )
 
     # 统一添加批次头部（已预留空间，不会超限）
@@ -1526,14 +1484,11 @@ def send_to_generic_webhook(
     economic_analysis: Any = None,
     display_regions: Optional[Dict] = None,
     standalone_data: Optional[Dict] = None,
-<<<<<<< HEAD
     compact: bool = False,
     treemap_pngs: Optional[Dict[str, bytes]] = None,
-=======
     search_items: Optional[list] = None,
     search_new_items: Optional[list] = None,
     show_search_snippet: bool = False,
->>>>>>> upstream/master
 ) -> bool:
     """
     发送到通用 Webhook（支持分批发送，支持自定义 JSON 模板，支持热榜+RSS+联网搜索合并+独立展示区）
@@ -1552,14 +1507,11 @@ def send_to_generic_webhook(
         split_content_func: 内容分批函数
         rss_items: RSS 统计条目列表（可选，用于合并推送）
         rss_new_items: RSS 新增条目列表（可选，用于新增区块）
-<<<<<<< HEAD
         treemap_pngs: {name: png_bytes} treemap 图片字典（可选），当模板包含
             {treemap_<name>_base64} 或 {treemap_<name>_datauri} 占位符时注入到最后一个批次
-=======
         search_items: 联网搜索统计条目列表（可选）
         search_new_items: 联网搜索新增条目列表（可选）
         show_search_snippet: 是否在搜索结果下附带简短摘要
->>>>>>> upstream/master
 
     Returns:
         bool: 发送是否成功
@@ -1593,13 +1545,10 @@ def send_to_generic_webhook(
         standalone_data=standalone_data,
         ai_stats=ai_stats,
         report_type=report_type,
-<<<<<<< HEAD
         compact=compact,
-=======
         search_items=search_items,
         search_new_items=search_new_items,
         show_search_snippet=show_search_snippet,
->>>>>>> upstream/master
     )
 
     # 统一添加批次头部
