@@ -1027,6 +1027,7 @@ class EndToEndAndCLITests(unittest.TestCase):
             self.assertTrue(all(status in ("pass", "warn") for status, _, _ in checks), checks)
 
 
+<<<<<<< HEAD
 class HtmlEmailSanitizationTests(unittest.TestCase):
     """Email sanitization must handle browser-accepted script tag variants."""
 
@@ -1050,5 +1051,7 @@ class HtmlEmailSanitizationTests(unittest.TestCase):
         self.assertNotIn("</script", cleaned.lower())
 
 
+=======
+>>>>>>> upstream/master
 if __name__ == "__main__":
     unittest.main()

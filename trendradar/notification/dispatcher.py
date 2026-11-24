@@ -369,12 +369,19 @@ class NotificationDispatcher:
         ai_analysis: Optional[AIAnalysisResult] = None,
         standalone_data: Optional[Dict] = None,
         skip_translation: bool = False,
+<<<<<<< HEAD
         economic_analysis: Optional["EconomicAnalysisResult"] = None,
+=======
+>>>>>>> upstream/master
         search_items: Optional[List[Dict]] = None,
         search_new_items: Optional[List[Dict]] = None,
     ) -> Dict[str, bool]:
         """
+<<<<<<< HEAD
         分发通知到所有已配置的渠道（支持热榜+RSS+联网搜索+经济分析合并推送+AI分析+独立展示区）
+=======
+        分发通知到所有已配置的渠道（支持热榜+RSS+联网搜索合并推送+AI分析+独立展示区）
+>>>>>>> upstream/master
 
         Args:
             report_data: 报告数据（由 prepare_report_data 生成）
@@ -388,7 +395,10 @@ class NotificationDispatcher:
             ai_analysis: AI 分析结果（可选）
             standalone_data: 独立展示区数据（可选）
             skip_translation: 跳过翻译（当数据已在上游翻译过时使用）
+<<<<<<< HEAD
             economic_analysis: 经济分析结果（可选，按渠道开关推送）
+=======
+>>>>>>> upstream/master
             search_items: 联网搜索统计条目列表（用于联网搜索区块）
             search_new_items: 联网搜索新增条目列表（用于新增区块）
 
@@ -439,68 +449,116 @@ class NotificationDispatcher:
         if self.config.get("FEISHU_WEBHOOK_URL"):
             results["feishu"] = self._send_feishu(
                 report_data, report_type, update_info, proxy_url, mode, rss_items, rss_new_items,
+<<<<<<< HEAD
                 ai_analysis, display_regions, standalone_data, economic_analysis
+=======
+                ai_analysis, display_regions, standalone_data,
+                search_items=search_items, search_new_items=search_new_items,
+                show_search_snippet=show_search_snippet,
+>>>>>>> upstream/master
             )
 
         # 钉钉
         if self.config.get("DINGTALK_WEBHOOK_URL"):
             results["dingtalk"] = self._send_dingtalk(
                 report_data, report_type, update_info, proxy_url, mode, rss_items, rss_new_items,
+<<<<<<< HEAD
                 ai_analysis, display_regions, standalone_data, economic_analysis
+=======
+                ai_analysis, display_regions, standalone_data,
+                search_items=search_items, search_new_items=search_new_items,
+                show_search_snippet=show_search_snippet,
+>>>>>>> upstream/master
             )
 
         # 企业微信
         if self.config.get("WEWORK_WEBHOOK_URL"):
             results["wework"] = self._send_wework(
                 report_data, report_type, update_info, proxy_url, mode, rss_items, rss_new_items,
+<<<<<<< HEAD
                 ai_analysis, display_regions, standalone_data, economic_analysis,
                 search_items=search_items, search_new_items=search_new_items,
                 show_search_snippet=show_search_snippet,
                 treemap_pngs=treemap_pngs if self.config.get("WEWORK_TREEMAP_IMAGE") else None,
+=======
+                ai_analysis, display_regions, standalone_data,
+                search_items=search_items, search_new_items=search_new_items,
+                show_search_snippet=show_search_snippet,
+>>>>>>> upstream/master
             )
 
         # Telegram（需要配对验证）
         if self.config.get("TELEGRAM_BOT_TOKEN") and self.config.get("TELEGRAM_CHAT_ID"):
             results["telegram"] = self._send_telegram(
                 report_data, report_type, update_info, proxy_url, mode, rss_items, rss_new_items,
+<<<<<<< HEAD
                 ai_analysis, display_regions, standalone_data, economic_analysis,
                 search_items=search_items, search_new_items=search_new_items,
                 show_search_snippet=show_search_snippet,
                 treemap_pngs=treemap_pngs if self.config.get("TELEGRAM_TREEMAP_IMAGE") else None,
+=======
+                ai_analysis, display_regions, standalone_data,
+                search_items=search_items, search_new_items=search_new_items,
+                show_search_snippet=show_search_snippet,
+>>>>>>> upstream/master
             )
 
         # ntfy（需要配对验证）
         if self.config.get("NTFY_SERVER_URL") and self.config.get("NTFY_TOPIC"):
             results["ntfy"] = self._send_ntfy(
                 report_data, report_type, update_info, proxy_url, mode, rss_items, rss_new_items,
+<<<<<<< HEAD
                 ai_analysis, display_regions, standalone_data, economic_analysis,
                 search_items=search_items, search_new_items=search_new_items,
                 show_search_snippet=show_search_snippet,
                 treemap_pngs=treemap_pngs if self.config.get("NTFY_TREEMAP_IMAGE") else None,
+=======
+                ai_analysis, display_regions, standalone_data,
+                search_items=search_items, search_new_items=search_new_items,
+                show_search_snippet=show_search_snippet,
+>>>>>>> upstream/master
             )
 
         # Bark
         if self.config.get("BARK_URL"):
             results["bark"] = self._send_bark(
                 report_data, report_type, update_info, proxy_url, mode, rss_items, rss_new_items,
+<<<<<<< HEAD
                 ai_analysis, display_regions, standalone_data, economic_analysis
+=======
+                ai_analysis, display_regions, standalone_data,
+                search_items=search_items, search_new_items=search_new_items,
+                show_search_snippet=show_search_snippet,
+>>>>>>> upstream/master
             )
 
         # Slack
         if self.config.get("SLACK_WEBHOOK_URL"):
             results["slack"] = self._send_slack(
                 report_data, report_type, update_info, proxy_url, mode, rss_items, rss_new_items,
+<<<<<<< HEAD
                 ai_analysis, display_regions, standalone_data, economic_analysis
+=======
+                ai_analysis, display_regions, standalone_data,
+                search_items=search_items, search_new_items=search_new_items,
+                show_search_snippet=show_search_snippet,
+>>>>>>> upstream/master
             )
 
         # 通用 Webhook
         if self.config.get("GENERIC_WEBHOOK_URL"):
             results["generic_webhook"] = self._send_generic_webhook(
                 report_data, report_type, update_info, proxy_url, mode, rss_items, rss_new_items,
+<<<<<<< HEAD
                 ai_analysis, display_regions, standalone_data, economic_analysis,
                 search_items=search_items, search_new_items=search_new_items,
                 show_search_snippet=show_search_snippet,
                 treemap_pngs=treemap_pngs if self.config.get("GENERIC_WEBHOOK_TREEMAP_IMAGE") else None,
+=======
+                ai_analysis, display_regions, standalone_data,
+                search_items=search_items, search_new_items=search_new_items,
+                show_search_snippet=show_search_snippet,
+>>>>>>> upstream/master
             )
 
         # 邮件（保持原有逻辑，已支持多收件人，AI 分析已嵌入 HTML）
@@ -625,6 +683,20 @@ class NotificationDispatcher:
             search_new_items if (show_search and regions.get("NEW_ITEMS", True)) else None,
         )
 
+    @staticmethod
+    def _filter_search_for_regions(
+        display_regions: Optional[Dict],
+        search_items: Optional[List[Dict]] = None,
+        search_new_items: Optional[List[Dict]] = None,
+    ) -> Tuple[Optional[List[Dict]], Optional[List[Dict]]]:
+        """根据 display_regions 过滤联网搜索区域数据"""
+        regions = display_regions or {}
+        show_search = regions.get("WEB_SEARCH", True)
+        return (
+            search_items if show_search else None,
+            search_new_items if (show_search and regions.get("NEW_ITEMS", True)) else None,
+        )
+
     def _send_feishu(
         self,
         report_data: Dict,
@@ -637,11 +709,15 @@ class NotificationDispatcher:
         ai_analysis: Optional[AIAnalysisResult] = None,
         display_regions: Optional[Dict] = None,
         standalone_data: Optional[Dict] = None,
+<<<<<<< HEAD
         economic_analysis: Optional["EconomicAnalysisResult"] = None,
+=======
+>>>>>>> upstream/master
         search_items: Optional[List[Dict]] = None,
         search_new_items: Optional[List[Dict]] = None,
         show_search_snippet: bool = False,
     ) -> bool:
+<<<<<<< HEAD
         """发送到飞书（多账号，支持热榜+RSS+联网搜索+经济分析合并推送+AI分析+独立展示区）"""
         compact = self._channel_format("FEISHU") == "compact"
         effective_regions = self._compact_regions(display_regions) if compact else display_regions
@@ -650,6 +726,13 @@ class NotificationDispatcher:
             report_data, effective_regions, rss_items, rss_new_items, ai_analysis, standalone_data, econ_in
         )
         si, sn = self._filter_search_for_regions(effective_regions, search_items, search_new_items)
+=======
+        """发送到飞书（多账号，支持热榜+RSS+联网搜索合并+AI分析+独立展示区）"""
+        rd, ri, rn, ai, sd = self._apply_display_regions(
+            report_data, display_regions, rss_items, rss_new_items, ai_analysis, standalone_data
+        )
+        si, sn = self._filter_search_for_regions(display_regions, search_items, search_new_items)
+>>>>>>> upstream/master
 
         return self._send_to_multi_accounts(
             channel_name="飞书",
@@ -672,7 +755,10 @@ class NotificationDispatcher:
                 economic_analysis=econ,
                 display_regions=effective_regions or {},
                 standalone_data=sd,
+<<<<<<< HEAD
                 compact=compact,
+=======
+>>>>>>> upstream/master
                 search_items=si,
                 search_new_items=sn,
                 show_search_snippet=show_search_snippet,
@@ -691,11 +777,15 @@ class NotificationDispatcher:
         ai_analysis: Optional[AIAnalysisResult] = None,
         display_regions: Optional[Dict] = None,
         standalone_data: Optional[Dict] = None,
+<<<<<<< HEAD
         economic_analysis: Optional["EconomicAnalysisResult"] = None,
+=======
+>>>>>>> upstream/master
         search_items: Optional[List[Dict]] = None,
         search_new_items: Optional[List[Dict]] = None,
         show_search_snippet: bool = False,
     ) -> bool:
+<<<<<<< HEAD
         """发送到钉钉（多账号，支持热榜+RSS+联网搜索+经济分析合并推送+AI分析+独立展示区）"""
         compact = self._channel_format("DINGTALK") == "compact"
         effective_regions = self._compact_regions(display_regions) if compact else display_regions
@@ -704,6 +794,13 @@ class NotificationDispatcher:
             report_data, effective_regions, rss_items, rss_new_items, ai_analysis, standalone_data, econ_in
         )
         si, sn = self._filter_search_for_regions(effective_regions, search_items, search_new_items)
+=======
+        """发送到钉钉（多账号，支持热榜+RSS+联网搜索合并+AI分析+独立展示区）"""
+        rd, ri, rn, ai, sd = self._apply_display_regions(
+            report_data, display_regions, rss_items, rss_new_items, ai_analysis, standalone_data
+        )
+        si, sn = self._filter_search_for_regions(display_regions, search_items, search_new_items)
+>>>>>>> upstream/master
 
         return self._send_to_multi_accounts(
             channel_name="钉钉",
@@ -725,7 +822,10 @@ class NotificationDispatcher:
                 economic_analysis=econ,
                 display_regions=effective_regions or {},
                 standalone_data=sd,
+<<<<<<< HEAD
                 compact=compact,
+=======
+>>>>>>> upstream/master
                 search_items=si,
                 search_new_items=sn,
                 show_search_snippet=show_search_snippet,
@@ -744,12 +844,16 @@ class NotificationDispatcher:
         ai_analysis: Optional[AIAnalysisResult] = None,
         display_regions: Optional[Dict] = None,
         standalone_data: Optional[Dict] = None,
+<<<<<<< HEAD
         economic_analysis: Optional["EconomicAnalysisResult"] = None,
         treemap_pngs: Optional[Dict[str, bytes]] = None,
+=======
+>>>>>>> upstream/master
         search_items: Optional[List[Dict]] = None,
         search_new_items: Optional[List[Dict]] = None,
         show_search_snippet: bool = False,
     ) -> bool:
+<<<<<<< HEAD
         """发送到企业微信（多账号，支持热榜+RSS+联网搜索+经济分析合并推送+AI分析+独立展示区）"""
         compact = self._channel_format("WEWORK") == "compact"
         effective_regions = self._compact_regions(display_regions) if compact else display_regions
@@ -758,6 +862,13 @@ class NotificationDispatcher:
             report_data, effective_regions, rss_items, rss_new_items, ai_analysis, standalone_data, econ_in
         )
         si, sn = self._filter_search_for_regions(effective_regions, search_items, search_new_items)
+=======
+        """发送到企业微信（多账号，支持热榜+RSS+联网搜索合并+AI分析+独立展示区）"""
+        rd, ri, rn, ai, sd = self._apply_display_regions(
+            report_data, display_regions, rss_items, rss_new_items, ai_analysis, standalone_data
+        )
+        si, sn = self._filter_search_for_regions(display_regions, search_items, search_new_items)
+>>>>>>> upstream/master
 
         return self._send_to_multi_accounts(
             channel_name="企业微信",
@@ -780,8 +891,11 @@ class NotificationDispatcher:
                 economic_analysis=econ,
                 display_regions=effective_regions or {},
                 standalone_data=sd,
+<<<<<<< HEAD
                 compact=compact,
                 treemap_pngs=treemap_pngs,
+=======
+>>>>>>> upstream/master
                 search_items=si,
                 search_new_items=sn,
                 show_search_snippet=show_search_snippet,
@@ -800,12 +914,16 @@ class NotificationDispatcher:
         ai_analysis: Optional[AIAnalysisResult] = None,
         display_regions: Optional[Dict] = None,
         standalone_data: Optional[Dict] = None,
+<<<<<<< HEAD
         economic_analysis: Optional["EconomicAnalysisResult"] = None,
         treemap_pngs: Optional[Dict[str, bytes]] = None,
+=======
+>>>>>>> upstream/master
         search_items: Optional[List[Dict]] = None,
         search_new_items: Optional[List[Dict]] = None,
         show_search_snippet: bool = False,
     ) -> bool:
+<<<<<<< HEAD
         """发送到 Telegram（多账号，需验证 token 和 chat_id 配对，支持热榜+RSS+联网搜索+经济分析合并推送+AI分析+独立展示区）"""
         compact = self._channel_format("TELEGRAM") == "compact"
         effective_regions = self._compact_regions(display_regions) if compact else display_regions
@@ -817,6 +935,16 @@ class NotificationDispatcher:
         search_items, search_new_items = self._filter_search_for_regions(
             effective_regions, search_items, search_new_items
         )
+=======
+        """发送到 Telegram（多账号，需验证 token 和 chat_id 配对，支持热榜+RSS+联网搜索合并+AI分析+独立展示区）"""
+        report_data, rss_items, rss_new_items, ai_analysis, standalone_data = self._apply_display_regions(
+            report_data, display_regions, rss_items, rss_new_items, ai_analysis, standalone_data
+        )
+        search_items, search_new_items = self._filter_search_for_regions(
+            display_regions, search_items, search_new_items
+        )
+        display_regions = display_regions or {}
+>>>>>>> upstream/master
 
         telegram_tokens = parse_multi_account_config(self.config["TELEGRAM_BOT_TOKEN"])
         telegram_chat_ids = parse_multi_account_config(self.config["TELEGRAM_CHAT_ID"])
@@ -859,8 +987,11 @@ class NotificationDispatcher:
                     economic_analysis=economic_analysis,
                     display_regions=display_regions,
                     standalone_data=standalone_data,
+<<<<<<< HEAD
                     compact=compact,
                     treemap_pngs=treemap_pngs,
+=======
+>>>>>>> upstream/master
                     search_items=search_items,
                     search_new_items=search_new_items,
                     show_search_snippet=show_search_snippet,
@@ -881,12 +1012,16 @@ class NotificationDispatcher:
         ai_analysis: Optional[AIAnalysisResult] = None,
         display_regions: Optional[Dict] = None,
         standalone_data: Optional[Dict] = None,
+<<<<<<< HEAD
         economic_analysis: Optional["EconomicAnalysisResult"] = None,
         treemap_pngs: Optional[Dict[str, bytes]] = None,
+=======
+>>>>>>> upstream/master
         search_items: Optional[List[Dict]] = None,
         search_new_items: Optional[List[Dict]] = None,
         show_search_snippet: bool = False,
     ) -> bool:
+<<<<<<< HEAD
         """发送到 ntfy（多账号，需验证 topic 和 token 配对，支持热榜+RSS+联网搜索+经济分析合并推送+AI分析+独立展示区）"""
         compact = self._channel_format("NTFY") == "compact"
         effective_regions = self._compact_regions(display_regions) if compact else display_regions
@@ -898,6 +1033,16 @@ class NotificationDispatcher:
         search_items, search_new_items = self._filter_search_for_regions(
             effective_regions, search_items, search_new_items
         )
+=======
+        """发送到 ntfy（多账号，需验证 topic 和 token 配对，支持热榜+RSS+联网搜索合并+AI分析+独立展示区）"""
+        report_data, rss_items, rss_new_items, ai_analysis, standalone_data = self._apply_display_regions(
+            report_data, display_regions, rss_items, rss_new_items, ai_analysis, standalone_data
+        )
+        search_items, search_new_items = self._filter_search_for_regions(
+            display_regions, search_items, search_new_items
+        )
+        display_regions = display_regions or {}
+>>>>>>> upstream/master
 
         ntfy_server_url = self.config["NTFY_SERVER_URL"]
         ntfy_topics = parse_multi_account_config(self.config["NTFY_TOPIC"])
@@ -939,8 +1084,11 @@ class NotificationDispatcher:
                     economic_analysis=economic_analysis,
                     display_regions=display_regions,
                     standalone_data=standalone_data,
+<<<<<<< HEAD
                     compact=compact,
                     treemap_pngs=treemap_pngs,
+=======
+>>>>>>> upstream/master
                     search_items=search_items,
                     search_new_items=search_new_items,
                     show_search_snippet=show_search_snippet,
@@ -961,11 +1109,15 @@ class NotificationDispatcher:
         ai_analysis: Optional[AIAnalysisResult] = None,
         display_regions: Optional[Dict] = None,
         standalone_data: Optional[Dict] = None,
+<<<<<<< HEAD
         economic_analysis: Optional["EconomicAnalysisResult"] = None,
+=======
+>>>>>>> upstream/master
         search_items: Optional[List[Dict]] = None,
         search_new_items: Optional[List[Dict]] = None,
         show_search_snippet: bool = False,
     ) -> bool:
+<<<<<<< HEAD
         """发送到 Bark（多账号，支持热榜+RSS+联网搜索+经济分析合并推送+AI分析+独立展示区）"""
         compact = self._channel_format("BARK") == "compact"
         effective_regions = self._compact_regions(display_regions) if compact else display_regions
@@ -974,6 +1126,13 @@ class NotificationDispatcher:
             report_data, effective_regions, rss_items, rss_new_items, ai_analysis, standalone_data, econ_in
         )
         si, sn = self._filter_search_for_regions(effective_regions, search_items, search_new_items)
+=======
+        """发送到 Bark（多账号，支持热榜+RSS+联网搜索合并+AI分析+独立展示区）"""
+        rd, ri, rn, ai, sd = self._apply_display_regions(
+            report_data, display_regions, rss_items, rss_new_items, ai_analysis, standalone_data
+        )
+        si, sn = self._filter_search_for_regions(display_regions, search_items, search_new_items)
+>>>>>>> upstream/master
 
         return self._send_to_multi_accounts(
             channel_name="Bark",
@@ -995,7 +1154,10 @@ class NotificationDispatcher:
                 economic_analysis=econ,
                 display_regions=effective_regions or {},
                 standalone_data=sd,
+<<<<<<< HEAD
                 compact=compact,
+=======
+>>>>>>> upstream/master
                 search_items=si,
                 search_new_items=sn,
                 show_search_snippet=show_search_snippet,
@@ -1014,11 +1176,15 @@ class NotificationDispatcher:
         ai_analysis: Optional[AIAnalysisResult] = None,
         display_regions: Optional[Dict] = None,
         standalone_data: Optional[Dict] = None,
+<<<<<<< HEAD
         economic_analysis: Optional["EconomicAnalysisResult"] = None,
+=======
+>>>>>>> upstream/master
         search_items: Optional[List[Dict]] = None,
         search_new_items: Optional[List[Dict]] = None,
         show_search_snippet: bool = False,
     ) -> bool:
+<<<<<<< HEAD
         """发送到 Slack（多账号，支持热榜+RSS+联网搜索+经济分析合并推送+AI分析+独立展示区）"""
         compact = self._channel_format("SLACK") == "compact"
         effective_regions = self._compact_regions(display_regions) if compact else display_regions
@@ -1027,6 +1193,13 @@ class NotificationDispatcher:
             report_data, effective_regions, rss_items, rss_new_items, ai_analysis, standalone_data, econ_in
         )
         si, sn = self._filter_search_for_regions(effective_regions, search_items, search_new_items)
+=======
+        """发送到 Slack（多账号，支持热榜+RSS+联网搜索合并+AI分析+独立展示区）"""
+        rd, ri, rn, ai, sd = self._apply_display_regions(
+            report_data, display_regions, rss_items, rss_new_items, ai_analysis, standalone_data
+        )
+        si, sn = self._filter_search_for_regions(display_regions, search_items, search_new_items)
+>>>>>>> upstream/master
 
         return self._send_to_multi_accounts(
             channel_name="Slack",
@@ -1048,7 +1221,10 @@ class NotificationDispatcher:
                 economic_analysis=econ,
                 display_regions=effective_regions or {},
                 standalone_data=sd,
+<<<<<<< HEAD
                 compact=compact,
+=======
+>>>>>>> upstream/master
                 search_items=si,
                 search_new_items=sn,
                 show_search_snippet=show_search_snippet,
@@ -1067,12 +1243,16 @@ class NotificationDispatcher:
         ai_analysis: Optional[AIAnalysisResult] = None,
         display_regions: Optional[Dict] = None,
         standalone_data: Optional[Dict] = None,
+<<<<<<< HEAD
         economic_analysis: Optional["EconomicAnalysisResult"] = None,
         treemap_pngs: Optional[Dict[str, bytes]] = None,
+=======
+>>>>>>> upstream/master
         search_items: Optional[List[Dict]] = None,
         search_new_items: Optional[List[Dict]] = None,
         show_search_snippet: bool = False,
     ) -> bool:
+<<<<<<< HEAD
         """发送到通用 Webhook（多账号，支持热榜+RSS+联网搜索+经济分析合并推送+AI分析+独立展示区）"""
         compact = self._channel_format("GENERIC_WEBHOOK") == "compact"
         effective_regions = self._compact_regions(display_regions) if compact else display_regions
@@ -1084,6 +1264,16 @@ class NotificationDispatcher:
         search_items, search_new_items = self._filter_search_for_regions(
             effective_regions, search_items, search_new_items
         )
+=======
+        """发送到通用 Webhook（多账号，支持热榜+RSS+联网搜索合并+AI分析+独立展示区）"""
+        report_data, rss_items, rss_new_items, ai_analysis, standalone_data = self._apply_display_regions(
+            report_data, display_regions, rss_items, rss_new_items, ai_analysis, standalone_data
+        )
+        search_items, search_new_items = self._filter_search_for_regions(
+            display_regions, search_items, search_new_items
+        )
+        display_regions = display_regions or {}
+>>>>>>> upstream/master
 
         urls = parse_multi_account_config(self.config.get("GENERIC_WEBHOOK_URL", ""))
         templates = parse_multi_account_config(self.config.get("GENERIC_WEBHOOK_TEMPLATE", ""))
@@ -1125,8 +1315,11 @@ class NotificationDispatcher:
                 economic_analysis=economic_analysis,
                 display_regions=display_regions,
                 standalone_data=standalone_data,
+<<<<<<< HEAD
                 compact=compact,
                 treemap_pngs=treemap_pngs,
+=======
+>>>>>>> upstream/master
                 search_items=search_items,
                 search_new_items=search_new_items,
                 show_search_snippet=show_search_snippet,

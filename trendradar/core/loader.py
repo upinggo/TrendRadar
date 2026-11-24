@@ -326,11 +326,19 @@ def _load_display_config(config_data: Dict) -> Dict:
     standalone = display.get("standalone", {})
 
     # 默认区域顺序
+<<<<<<< HEAD
     default_region_order = ["hotlist", "rss", "web_search", "new_items", "standalone", "ai_analysis", "economic_analysis"]
     region_order = display.get("region_order", default_region_order)
 
     # 验证 region_order 中的值是否合法
     valid_regions = {"hotlist", "rss", "web_search", "new_items", "standalone", "ai_analysis", "economic_analysis"}
+=======
+    default_region_order = ["hotlist", "rss", "web_search", "new_items", "standalone", "ai_analysis"]
+    region_order = display.get("region_order", default_region_order)
+
+    # 验证 region_order 中的值是否合法
+    valid_regions = {"hotlist", "rss", "web_search", "new_items", "standalone", "ai_analysis"}
+>>>>>>> upstream/master
     region_order = [r for r in region_order if r in valid_regions]
 
     # 如果过滤后为空，使用默认顺序
