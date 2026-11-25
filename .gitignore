@@ -21,3 +21,4 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
+config/custom/keyword/focused_news.txt

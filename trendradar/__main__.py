@@ -8,6 +8,7 @@ TrendRadar 主程序
 
 import argparse
 import os
+import time
 import webbrowser
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -19,6 +20,7 @@ from trendradar.core.analyzer import convert_keyword_stats_to_platform_stats
 from trendradar.crawler import DataFetcher
 from trendradar.storage import convert_crawl_results_to_news_data
 from trendradar.utils.time import DEFAULT_TIMEZONE, is_within_days, calculate_days_old, format_iso_time_friendly
+from trendradar.utils.diagnostics import summary, warning
 from trendradar.ai import AIAnalyzer, AIAnalysisResult
 from trendradar.ai.economic_analyzer import EconomicAnalyzer, EconomicAnalysisResult
 from trendradar.ai.economic_data import EconomicDataFetcher
@@ -477,6 +479,7 @@ class NewsAnalyzer:
         cached = analysis_store.load(today)
         if cached and cached.success:
             print(f"[Economic] 复用今日缓存结果（{today.strftime('%Y-%m-%d')}）")
+            summary("Economic allocation: valid daily cache reused (3 profiles)")
             return cached
 
         print("[Economic] 抓取经济数据快照...")
@@ -489,9 +492,13 @@ class NewsAnalyzer:
                 get_time_func=self.ctx.get_time,
                 debug=debug,
                 request_timeout=econ_config.get("REQUEST_TIMEOUT", 10.0),
+                total_timeout=econ_config.get("TOTAL_TIMEOUT", 60.0),
             )
+            started = time.monotonic()
             snapshot = fetcher.fetch_snapshot()
-            print(f"[Economic] 数据源: {snapshot.sources_used or '无'}; 异常: {len(snapshot.fetch_errors)} 条")
+            print(f"[Economic] 数据源: {snapshot.sources_used or '无'}; 异常: {len(snapshot.fetch_errors)} 条; 耗时: {time.monotonic() - started:.1f}s")
+            if snapshot.fetch_errors:
+                warning(f"Economic snapshot: {len(snapshot.fetch_errors)} source errors; available sources: {', '.join(snapshot.sources_used) or 'none'}")
 
             # 持久化 + 多周期变化
             store = SnapshotStore(retention_days=retention_days)
@@ -529,15 +536,16 @@ class NewsAnalyzer:
 
             if result.success:
                 print(f"[Economic] 分析完成（{len(result.allocations)} 档配置，{len(result.validation_warnings)} 条归一化提示）")
+                summary(f"Economic allocation: valid ({len(result.allocations)} profiles; {len(result.validation_warnings)} rounding adjustments)")
                 try:
                     analysis_store.save(result, when=today)
                     analysis_store.cleanup()
                 except Exception as e:
                     print(f"[Economic] 分析结果缓存失败（不影响本次推送）: {type(e).__name__}: {e}")
             elif result.skipped:
-                print(f"[Economic] 跳过: {result.error}")
+                warning(f"Economic allocation skipped: {result.error}")
             else:
-                print(f"[Economic] 分析失败: {result.error}（将以原始行情兜底渲染）")
+                warning(f"Economic allocation invalid/unavailable: {result.error}; raw market snapshot preserved")
             return result
         except Exception as e:
             import traceback

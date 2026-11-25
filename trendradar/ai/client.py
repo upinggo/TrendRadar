@@ -7,6 +7,8 @@ AI 客户端模块
 """
 
 import os
+import time
+import unicodedata
 from typing import Any, Dict, List
 
 from litellm import completion
@@ -67,6 +69,10 @@ class AIClient:
         Raises:
             Exception: API 调用失败时抛出异常
         """
+        model_error = self._model_error()
+        if model_error:
+            raise ValueError(model_error)
+
         # 构建请求参数
         params = {
             "model": self.model,
@@ -101,7 +107,11 @@ class AIClient:
                 params[key] = value
 
         # 调用 LiteLLM
-        response = completion(**params)
+        started = time.monotonic()
+        try:
+            response = completion(**params)
+        finally:
+            print(f"[AI] 请求耗时: {time.monotonic() - started:.1f}s")
 
         # 提取响应内容
         # 某些模型/提供商返回 list（内容块）而非 str，统一转为 str
@@ -113,6 +123,15 @@ class AIClient:
             )
         return content or ""
 
+    def _model_error(self) -> str:
+        if not isinstance(self.model, str) or not self.model:
+            return "未配置 AI 模型（model）"
+        if any(c.isspace() or unicodedata.category(c).startswith("C") for c in self.model):
+            return "AI 模型标识包含空白或不可见字符，请重新输入 provider/model"
+        if "/" not in self.model or any(not part for part in self.model.split("/")):
+            return "AI 模型格式应为 provider/model"
+        return ""
+
     def validate_config(self) -> tuple[bool, str]:
         """
         验证配置是否有效
@@ -120,8 +139,9 @@ class AIClient:
         Returns:
             tuple: (是否有效, 错误信息)
         """
-        if not self.model:
-            return False, "未配置 AI 模型（model）"
+        model_error = self._model_error()
+        if model_error:
+            return False, model_error
 
         if not self.api_key:
             return False, "未配置 AI API Key，请在 config.yaml 或环境变量 AI_API_KEY 中设置"

@@ -41,7 +41,8 @@ class AnalysisStore:
             return None
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
-            return EconomicAnalysisResult(**data)
+            result = EconomicAnalysisResult(**data)
+            return result if result.success and result.has_valid_allocations() else None
         except (json.JSONDecodeError, OSError, TypeError):
             return None
 
