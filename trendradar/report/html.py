@@ -139,7 +139,9 @@ _EMAIL_TOC_RE = re.compile(
 _EMAIL_DATA_ATTR_RE = re.compile(
     r'\s+data-(?:rank-(?:timeline|source)|copy-query|ai-accent)="[^"]*"'
 )
-_SCRIPT_TAG_RE = re.compile(r"<script\b[^>]*>.*?</script>", re.DOTALL | re.IGNORECASE)
+_SCRIPT_TAG_RE = re.compile(
+    r"<script\b[^>]*>.*?</script\b[^>]*>", re.DOTALL | re.IGNORECASE
+)
 
 
 def prepare_html_for_email(html_content: str) -> str:
