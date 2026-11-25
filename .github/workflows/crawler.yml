@@ -45,7 +45,7 @@ concurrency:
 
 permissions:
   contents: write
-  actions: write
+  actions: read
 
 jobs:
   crawl:
@@ -167,6 +167,46 @@ jobs:
             echo "SKIP_CRAWL=true" >> "$GITHUB_ENV"
           fi
 
+      # The reports repo already stores operational files. Restore them before
+      # crawling so headline dedupe and daily economic caches survive fresh runners.
+      - name: Check reports state configuration
+        if: success() && env.SKIP_CRAWL != 'true'
+        id: reports_config
+        env:
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+        run: |
+          if [ -n "$DEPLOY_TOKEN" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::DEPLOY_TOKEN absent: reports-repo state restoration and publishing disabled. Configure remote storage for persistent headline history."
+            echo "- State restoration: disabled (no DEPLOY_TOKEN)" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Checkout reports state
+        if: success() && env.SKIP_CRAWL != 'true' && steps.reports_config.outputs.enabled == 'true'
+        id: reports_checkout
+        continue-on-error: true
+        uses: actions/checkout@v6
+        with:
+          repository: upinggo/profile
+          ref: main
+          path: .reports-repo
+          fetch-depth: 1
+          token: ${{ secrets.DEPLOY_TOKEN }}
+
+      - name: Restore crawler state
+        if: success() && env.SKIP_CRAWL != 'true' && steps.reports_checkout.outcome == 'success'
+        id: state_restore
+        continue-on-error: true
+        run: uv run --frozen --no-dev python scripts/restore_crawler_state.py .reports-repo/news-reports
+
+      - name: Warn if state restoration failed
+        if: success() && env.SKIP_CRAWL != 'true' && (steps.reports_checkout.outcome == 'failure' || steps.state_restore.outcome == 'failure')
+        run: |
+          echo "::warning::Reports state could not be fully restored; crawling and notifications will continue with available local state. Reports publishing requires a successful checkout."
+          echo "- DEGRADED: reports state restoration failed; crawler and notification delivery remain enabled" >> "$GITHUB_STEP_SUMMARY"
+
       - name: Run crawler
         if: success() && env.SKIP_CRAWL != 'true'
         env:
@@ -194,6 +234,7 @@ jobs:
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
           AI_MODEL: ${{ secrets.AI_MODEL }}
           AI_API_BASE: ${{ secrets.AI_API_BASE }}
+          WEB_SEARCH_API_KEY: ${{ secrets.WEB_SEARCH_API_KEY }}
           # 远程存储配置
           S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
           S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
@@ -201,10 +242,13 @@ jobs:
           S3_ENDPOINT_URL: ${{ secrets.S3_ENDPOINT_URL }}
           S3_REGION: ${{ secrets.S3_REGION }}
           GITHUB_ACTIONS: true
-        run: uv run python -m trendradar
+        run: |
+          START=$SECONDS
+          uv run --frozen --no-dev python -u -m trendradar
+          echo "- Crawler execution: $((SECONDS - START)) seconds; report generation completed" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Push output/ to reports repo
-        if: success() && env.SKIP_CRAWL != 'true'
+        if: success() && env.SKIP_CRAWL != 'true' && steps.reports_checkout.outcome == 'success'
         env:
           DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
         run: |
@@ -218,11 +262,8 @@ jobs:
             exit 0
           fi
 
-          REPORTS_DIR="$RUNNER_TEMP/reports-repo"
-          rm -rf "$REPORTS_DIR"
-          git clone --depth=1 --branch main \
-            "https://x-access-token:${DEPLOY_TOKEN}@github.com/upinggo/profile.git" \
-            "$REPORTS_DIR"
+          # Reuse checkout credentials; never place a deploy token in a Git URL.
+          REPORTS_DIR="$GITHUB_WORKSPACE/.reports-repo"
 
           mkdir -p "$REPORTS_DIR/news-reports"
           rsync -a output/ "$REPORTS_DIR/news-reports/"
@@ -237,6 +278,7 @@ jobs:
             git commit -m "chore: update report $(date -u +'%Y-%m-%d %H:%M UTC')"
             git push origin main
           fi
+          echo "- Reports publishing: succeeded" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Commit and push generated report
         if: success() && env.SKIP_CRAWL != 'true'
@@ -262,7 +304,7 @@ jobs:
       # 配置教程详见 README「自动部署到 Cloudflare Pages」章节。
       # --------------------------------------------------------------------------------
       - name: Check Cloudflare config
-        if: success()
+        if: success() && env.SKIP_CRAWL != 'true'
         id: cf_check
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

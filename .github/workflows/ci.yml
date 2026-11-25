@@ -39,8 +39,15 @@ jobs:
           python -c "import mcp_server; print('mcp_server OK')"
           python -c "from trendradar.notification import senders, dispatcher; print('notification OK')"
 
+      - name: Pipeline reliability regression tests
+        env:
+          LITELLM_LOCAL_MODEL_COST_MAP: "True"
+        run: |
+          python -m unittest discover -s tests -p "test_pipeline_reliability.py" -v
+          python -m unittest discover -s tests -p "test_ai_extra_params.py" -v
+
       - name: Syntax check
-        run: python -m compileall -q trendradar mcp_server
+        run: python -m compileall -q trendradar mcp_server scripts
 
   visual-report:
     name: visual-report

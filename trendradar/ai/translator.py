@@ -6,11 +6,12 @@ AI 翻译器模块
 基于 LiteLLM 统一接口，支持 100+ AI 提供商
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any, Dict, List
 
 from trendradar.ai.client import AIClient
 from trendradar.ai.prompt_loader import load_prompt_template
+from trendradar.utils.diagnostics import safe_error
 
 
 @dataclass
@@ -95,19 +96,43 @@ class AITranslator:
 
             # 调用 AI API
             response = self._call_ai(user_prompt)
-            result.translated_text = response.strip()
-            result.success = True
+            result.translated_text = response.strip() or text
+            result.success = bool(response.strip())
+            if not result.success:
+                result.error = "AI 返回空翻译，保留原文"
 
         except Exception as e:
-            error_type = type(e).__name__
-            error_msg = str(e)
-            if len(error_msg) > 100:
-                error_msg = error_msg[:100] + "..."
-            result.error = f"翻译失败 ({error_type}): {error_msg}"
+            result.translated_text = text
+            result.error = f"翻译失败: {safe_error(e)}"
 
         return result
 
     def translate_batch(self, texts: List[str]) -> BatchTranslationResult:
+        """Deduplicate titles and reuse successful translations within this run."""
+        if not self.enabled or not self.client.api_key:
+            return self._translate_batch_uncached(texts)
+        cache = getattr(self, "_translation_cache", None)
+        if cache is None:
+            cache = self._translation_cache = {}
+        unique = list(dict.fromkeys(texts))
+        pending = [text for text in unique if text not in cache]
+        fresh = self._translate_batch_uncached(pending)
+        by_text = {result.original_text: result for result in fresh.results}
+        for text, result in by_text.items():
+            if result.success:
+                cache[text] = result
+        merged = BatchTranslationResult(
+            total_count=len(texts), prompt=fresh.prompt,
+            raw_response=fresh.raw_response, parsed_count=fresh.parsed_count,
+        )
+        for text in texts:
+            result = replace(by_text[text] if text in by_text else cache[text])
+            merged.results.append(result)
+            merged.success_count += int(result.success)
+            merged.fail_count += int(not result.success)
+        return merged
+
+    def _translate_batch_uncached(self, texts: List[str]) -> BatchTranslationResult:
         """
         批量翻译文本（单次 API 调用）
 
@@ -195,12 +220,13 @@ class AITranslator:
                     batch_result.success_count += 1
                 else:
                     batch_result.results[idx].translated_text = batch_result.results[idx].original_text
-                    batch_result.results[idx].success = True
-                    batch_result.success_count += 1
+                    batch_result.results[idx].error = "AI 缺少此编号的有效翻译，保留原文"
+                    batch_result.fail_count += 1
 
         except Exception as e:
-            error_msg = f"批量翻译失败: {type(e).__name__}: {str(e)[:100]}"
+            error_msg = f"批量翻译失败: {safe_error(e)}"
             for idx in non_empty_indices:
+                batch_result.results[idx].translated_text = batch_result.results[idx].original_text
                 batch_result.results[idx].error = error_msg
             batch_result.fail_count = len(non_empty_indices)
 
@@ -260,9 +286,14 @@ class AITranslator:
             # 编号 i(1-based) 对应位置 i-1；缺失的编号位置留空（由上层保留原文），
             # 不让后续译文顶替到相邻标题上
             idx_to_text = {}
+            duplicates = set()
             for idx, text in results:
                 if 1 <= idx <= expected_count:
+                    if idx in idx_to_text:
+                        duplicates.add(idx)
                     idx_to_text[idx] = text
+            for idx in duplicates:
+                idx_to_text[idx] = ""  # Ambiguous response: retain original, never guess.
             translated = [idx_to_text.get(i + 1, "") for i in range(expected_count)]
         else:
             # AI 未使用 [编号] 格式：回退为按行顺序提取
@@ -275,6 +306,8 @@ class AITranslator:
                 elif stripped:
                     translated.append(stripped)
             raw_parsed_count = len(translated)
+            if raw_parsed_count != expected_count:
+                translated = [""] * expected_count  # Cannot align an unnumbered partial response.
 
         # 确保返回正确数量
         while len(translated) < expected_count:

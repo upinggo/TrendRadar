@@ -449,6 +449,7 @@ def _load_economic_analysis_config(config_data: Dict) -> Dict:
         "USE_PROXY": bool(econ.get("use_proxy", False)),
         "PROXY_URL": _get_env_str("ECONOMIC_PROXY_URL") or econ.get("proxy_url", ""),
         "REQUEST_TIMEOUT": float(econ.get("request_timeout", 10)),
+        "TOTAL_TIMEOUT": float(econ.get("total_timeout", 60)),
         "SNAPSHOT_RETENTION_DAYS": int(econ.get("snapshot_retention_days", 30)),
         "CHANNELS": result_channels,
     }

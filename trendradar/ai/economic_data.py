@@ -19,6 +19,7 @@
 import os
 import socket
 import threading
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -108,12 +109,17 @@ class EconomicDataFetcher:
         get_time_func: Optional[Callable[[], datetime]] = None,
         debug: bool = False,
         request_timeout: float = 10.0,
+        total_timeout: float = 60.0,
     ):
         self.use_proxy = use_proxy
         self.proxy_url = proxy_url.strip()
         self.get_time_func = get_time_func or datetime.now
         self.debug = debug
         self.request_timeout = request_timeout
+        self.total_timeout = total_timeout
+        self._deadline: Optional[float] = None
+        if request_timeout <= 0 or total_timeout <= 0:
+            raise ValueError("Economic timeouts must be positive")
 
         # 配置 yfinance 的代理（akshare 走国内站不需要）
         if self.use_proxy and self.proxy_url:
@@ -127,6 +133,7 @@ class EconomicDataFetcher:
 
     # ---- 公共入口 ----------------------------------------------------------
     def fetch_snapshot(self) -> EconomicSnapshot:
+        self._deadline = time.monotonic() + self.total_timeout
         snap = EconomicSnapshot(
             snapshot_time=self.get_time_func().strftime("%Y-%m-%d %H:%M:%S"),
         )
@@ -134,25 +141,28 @@ class EconomicDataFetcher:
         # 腾讯：A股 + 港股 行情。免依赖，必跑。
         try:
             self._fetch_tencent_quotes(snap)
-            snap.sources_used.append("tencent")
+            if snap.a_stock or snap.a_stock_industry or snap.hk_stock:
+                snap.sources_used.append("tencent")
         except Exception as e:
             snap.fetch_errors.append(f"[腾讯] 整段失败: {type(e).__name__}: {e}")
 
         # AKShare：仅宏观指标（CPI/PMI/M2/中债10Y）。可选依赖。
         akshare = self._try_import("akshare")
         if akshare is not None:
-            snap.sources_used.append("akshare")
             self._fetch_china_bonds(akshare, snap)
             self._fetch_china_macro(akshare, snap)
+            if snap.china_macro or "中国国债10Y" in snap.bonds:
+                snap.sources_used.append("akshare")
 
         # yfinance：海外行情。可选依赖。
         yfinance = self._try_import("yfinance")
         if yfinance is not None:
-            snap.sources_used.append("yfinance")
             self._fetch_us_stock(yfinance, snap)
             self._fetch_us_bonds(yfinance, snap)
             self._fetch_commodities(yfinance, snap)
             self._fetch_fx(yfinance, snap)
+            if snap.us_stock or snap.commodities or snap.fx or "美国国债10Y" in snap.bonds:
+                snap.sources_used.append("yfinance")
 
         if not snap.sources_used:
             snap.fetch_errors.append(
@@ -347,6 +357,13 @@ class EconomicDataFetcher:
         超时返回 None 并把错误记录到 snap.fetch_errors（线程仍会在后台跑完，
         但我们不再关心它的结果）。
         """
+        wait = self.request_timeout
+        if self._deadline is not None:
+            wait = min(wait, max(0.0, self._deadline - time.monotonic()))
+        if wait <= 0:
+            snap.fetch_errors.append(f"[{label}] 行情等待预算已耗尽，跳过")
+            return None
+        started = time.monotonic()
         result_box: Dict[str, Any] = {"value": None, "error": None}
 
         def runner() -> None:
@@ -357,10 +374,12 @@ class EconomicDataFetcher:
 
         t = threading.Thread(target=runner, daemon=True, name=f"econ-fetch-{label}")
         t.start()
-        t.join(self.request_timeout)
+        t.join(wait)
+        status = "timeout" if t.is_alive() else ("error" if result_box["error"] else "ok")
+        print(f"[Economic] {label}: {status}, {time.monotonic() - started:.1f}s")
 
         if t.is_alive():
-            snap.fetch_errors.append(f"[{label}] 超时（>{self.request_timeout}s）")
+            snap.fetch_errors.append(f"[{label}] 超时（>{wait:.1f}s）")
             if self.debug:
                 print(f"[Economic][debug] {label} timeout")
             return None

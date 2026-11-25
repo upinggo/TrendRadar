@@ -141,6 +141,7 @@ rss:
     - id: "yahoo-finance"
       name: "Yahoo Finance"
       url: "https://finance.yahoo.com/news/rssindex"
+      enabled: false                  # Returned 404; verify a valid feed before re-enabling.
 
     # Custom feed example
     # - id: "custom-feed"
@@ -493,7 +494,7 @@ ai_translation:
   language: "English"               # Target language (e.g. "English", "Chinese", "Korean")
   prompt_file: "ai_translation_prompt.txt"   # Prompt file (relative to the config directory)
 
-  batch_size: 100                   # Titles sent to the AI per batch; auto-batched beyond this
+  batch_size: 40                    # Smaller batches reduce truncation; successful translations reused within each run
   batch_interval: 2                 # Batch interval (seconds) to avoid API rate limits; 0=no wait
 
   # Translation scope (regions turned off in display.regions are never translated even if enabled here)

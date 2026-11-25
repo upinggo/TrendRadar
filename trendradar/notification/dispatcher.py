@@ -13,6 +13,8 @@
 from __future__ import annotations
 
 import time
+
+from trendradar.utils.diagnostics import summary, warning
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple
 
 from trendradar.core.config import (
@@ -184,7 +186,12 @@ class NotificationDispatcher:
             batch_num = batch_count + 1
             if num_batches > 1:
                 print(f"[翻译] 第 {batch_num}/{num_batches} 批（{len(batch_texts)} 条）...")
+            started = time.monotonic()
             result = self.translator.translate_batch(batch_texts)
+            print(f"[翻译] 批次 {batch_num} 耗时: {time.monotonic() - started:.1f}s，成功 {result.success_count}，失败 {result.fail_count}")
+            if result.fail_count:
+                error = next((r.error for r in result.results if r.error), "缺少有效译文")
+                warning(f"翻译批次 {batch_num}: {result.fail_count}/{len(batch_texts)} 失败；{error}")
             merged_result.results.extend(result.results)
             merged_result.success_count += result.success_count
             merged_result.fail_count += result.fail_count
@@ -218,6 +225,7 @@ class NotificationDispatcher:
             batch_count += 1
 
         result = merged_result
+        summary(f"Translation: {result.success_count}/{result.total_count} successful; {result.fail_count} failed (originals preserved)")
 
         if result.success_count == 0:
             print(f"[翻译] 翻译失败: {result.results[0].error if result.results else '未知错误'}")
@@ -331,12 +339,18 @@ class NotificationDispatcher:
             batch_num = batch_count + 1
             if num_batches > 1:
                 print(f"[翻译] 联网搜索第 {batch_num}/{num_batches} 批（{len(batch_texts)} 条）...")
+            started = time.monotonic()
             result = self.translator.translate_batch(batch_texts)
+            print(f"[翻译] 联网搜索批次 {batch_num} 耗时: {time.monotonic() - started:.1f}s")
+            if result.fail_count:
+                error = next((r.error for r in result.results if r.error), "缺少有效译文")
+                warning(f"联网搜索翻译批次 {batch_num}: {result.fail_count} 失败；{error}")
             merged_result.results.extend(result.results)
             merged_result.success_count += result.success_count
             merged_result.fail_count += result.fail_count
             batch_count += 1
 
+        summary(f"Search translation: {merged_result.success_count}/{merged_result.total_count} successful; {merged_result.fail_count} failed")
         if merged_result.success_count == 0:
             err_msg = merged_result.results[0].error if merged_result.results else "未知错误"
             print(f"[翻译] 联网搜索翻译失败: {err_msg}")
