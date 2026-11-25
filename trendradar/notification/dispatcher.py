@@ -453,14 +453,18 @@ class NotificationDispatcher:
         if self.config.get("FEISHU_WEBHOOK_URL"):
             results["feishu"] = self._send_feishu(
                 report_data, report_type, update_info, proxy_url, mode, rss_items, rss_new_items,
-                ai_analysis, display_regions, standalone_data, economic_analysis
+                ai_analysis, display_regions, standalone_data, economic_analysis,
+                search_items=search_items, search_new_items=search_new_items,
+                show_search_snippet=show_search_snippet,
             )
 
         # 钉钉
         if self.config.get("DINGTALK_WEBHOOK_URL"):
             results["dingtalk"] = self._send_dingtalk(
                 report_data, report_type, update_info, proxy_url, mode, rss_items, rss_new_items,
-                ai_analysis, display_regions, standalone_data, economic_analysis
+                ai_analysis, display_regions, standalone_data, economic_analysis,
+                search_items=search_items, search_new_items=search_new_items,
+                show_search_snippet=show_search_snippet,
             )
 
         # 企业微信
@@ -497,14 +501,18 @@ class NotificationDispatcher:
         if self.config.get("BARK_URL"):
             results["bark"] = self._send_bark(
                 report_data, report_type, update_info, proxy_url, mode, rss_items, rss_new_items,
-                ai_analysis, display_regions, standalone_data, economic_analysis
+                ai_analysis, display_regions, standalone_data, economic_analysis,
+                search_items=search_items, search_new_items=search_new_items,
+                show_search_snippet=show_search_snippet,
             )
 
         # Slack
         if self.config.get("SLACK_WEBHOOK_URL"):
             results["slack"] = self._send_slack(
                 report_data, report_type, update_info, proxy_url, mode, rss_items, rss_new_items,
-                ai_analysis, display_regions, standalone_data, economic_analysis
+                ai_analysis, display_regions, standalone_data, economic_analysis,
+                search_items=search_items, search_new_items=search_new_items,
+                show_search_snippet=show_search_snippet,
             )
 
         # 通用 Webhook
