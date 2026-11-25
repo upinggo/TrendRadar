@@ -138,10 +138,7 @@ class AIAnalyzer:
         platforms: Optional[List[str]] = None,
         keywords: Optional[List[str]] = None,
         standalone_data: Optional[Dict] = None,
-<<<<<<< HEAD
         economic_analysis: Optional[Any] = None,
-=======
->>>>>>> upstream/master
         search_stats: Optional[List[Dict]] = None,
     ) -> AIAnalysisResult:
         """
@@ -826,10 +823,7 @@ class AIAnalyzer:
             result.rss_insights = _coerce_analysis_text(data.get("rss_insights", ""))
             result.search_insights = _coerce_analysis_text(data.get("search_insights", ""))
             result.outlook_strategy = _coerce_analysis_text(data.get("outlook_strategy", ""))
-<<<<<<< HEAD
             result.macro_conclusion = _coerce_analysis_text(data.get("macro_conclusion", ""))
-=======
->>>>>>> upstream/master
 
             # 解析独立展示区概括
             summaries = data.get("standalone_summaries", {})

@@ -8,11 +8,7 @@
 from datetime import datetime
 from typing import Dict, List, Optional, Callable
 
-<<<<<<< HEAD
 from trendradar.report.formatter import format_title_for_platform, format_title_compact
-=======
-from trendradar.report.formatter import format_title_for_platform
->>>>>>> upstream/master
 from trendradar.report.helpers import clean_title, format_rank_display, html_escape
 from trendradar.utils.time import DEFAULT_TIMEZONE, format_iso_time_friendly, convert_time_for_display
 from trendradar.notification.batch import truncate_at_line_boundary
@@ -133,11 +129,7 @@ DEFAULT_BATCH_SIZES = {
 }
 
 # 默认区域顺序
-<<<<<<< HEAD
 DEFAULT_REGION_ORDER = ["hotlist", "rss", "web_search", "new_items", "standalone", "ai_analysis", "economic_analysis"]
-=======
-DEFAULT_REGION_ORDER = ["hotlist", "rss", "web_search", "new_items", "standalone", "ai_analysis"]
->>>>>>> upstream/master
 
 
 def split_content_into_batches(
@@ -161,10 +153,7 @@ def split_content_into_batches(
     ai_stats: Optional[Dict] = None,
     report_type: str = "热点分析报告",
     show_new_section: bool = True,
-<<<<<<< HEAD
     compact: bool = False,
-=======
->>>>>>> upstream/master
     search_items: Optional[list] = None,
     search_new_items: Optional[list] = None,
     show_search_snippet: bool = False,
@@ -283,25 +272,11 @@ def split_content_into_batches(
                 total_news_line += f"（新增 {new_count} + {rss_new_count}）"
         base_header += f"{total_news_line}\n"
 
-<<<<<<< HEAD
         # 2. 热榜
         hotlist_info = f"{b_s}热榜：{b_e} {total_hotlist_count}/{hotlist_total}"
         if platform_total > 0:
             hotlist_info += f"（平台 {platform_success}/{platform_total}）"
         base_header += f"{hotlist_info}\n"
-=======
-    # 1. 总新闻
-    rss_new_count = sum(len(stat.get("titles", [])) for stat in (rss_new_items or []))
-    search_new_count = sum(len(stat.get("titles", [])) for stat in (search_new_items or []))
-    total_new = new_count + rss_new_count + search_new_count
-    total_news_line = f"{b_s}总新闻：{b_e} {total_titles} 条"
-    if total_new > 0:
-        if search_new_count > 0:
-            total_news_line += f"（新增 热榜 {new_count} + RSS {rss_new_count} + 搜索 {search_new_count}）"
-        else:
-            total_news_line += f"（新增 {new_count} + {rss_new_count}）"
-    base_header += f"{total_news_line}\n"
->>>>>>> upstream/master
 
         # 3. RSS
         if rss_source_total > 0:
@@ -321,7 +296,6 @@ def split_content_into_batches(
                     sa_parts.append(f"RSS {sa_rss_count}")
                 base_header += f"{b_s}独立展示：{b_e} {sa_total} 条（{' + '.join(sa_parts)}）\n"
 
-<<<<<<< HEAD
         # 3.5. 联网搜索
         if search_topic_total > 0 or search_items:
             search_info = f"{b_s}联网搜索：{b_e} {search_matched} 条"
@@ -350,49 +324,6 @@ def split_content_into_batches(
             if ai_stats.get("include_standalone", False):
                 ai_parts.append(str(standalone_analyzed))
             ai_display = " + ".join(ai_parts) if sum(int(p) for p in ai_parts) > 0 else "0"
-=======
-    # 3.5. 联网搜索
-    if search_topic_total > 0 or search_items:
-        search_info = f"{b_s}联网搜索：{b_e} {search_matched} 条"
-        if search_topic_total > 0:
-            search_info += f"（主题 {search_topic_success}/{search_topic_total}）"
-        base_header += f"{search_info}\n"
-
-    # 4. 独立展示区（仅在有数据时显示）
-    if standalone_data:
-        sa_platform_count = sum(len(p.get("items", [])) for p in standalone_data.get("platforms", []))
-        sa_rss_count = sum(len(f.get("items", [])) for f in standalone_data.get("rss_feeds", []))
-        sa_total = sa_platform_count + sa_rss_count
-        if sa_total > 0:
-            sa_parts = []
-            if sa_platform_count > 0:
-                sa_parts.append(f"热榜 {sa_platform_count}")
-            if sa_rss_count > 0:
-                sa_parts.append(f"RSS {sa_rss_count}")
-            base_header += f"{b_s}独立展示：{b_e} {sa_total} 条（{' + '.join(sa_parts)}）\n"
-
-    # 5. AI 分析（仅在有分析数据时显示）
-    standalone_analyzed = ai_stats.get("standalone_analyzed", 0) if ai_stats else 0
-    search_analyzed = ai_stats.get("search_analyzed", 0) if ai_stats else 0
-    ai_has_data = ai_stats and (
-        ai_stats.get("analyzed_news", 0) > 0
-        or standalone_analyzed > 0
-        or search_analyzed > 0
-    )
-    if ai_has_data:
-        hotlist_analyzed = ai_stats.get("hotlist_analyzed", 0)
-        rss_analyzed = ai_stats.get("rss_analyzed", 0)
-        ai_mode_val = ai_stats.get("ai_mode", "")
-
-        ai_parts = [str(hotlist_analyzed)]
-        if ai_stats.get("include_rss", True):
-            ai_parts.append(str(rss_analyzed))
-        if ai_stats.get("include_web_search", True) and search_analyzed > 0:
-            ai_parts.append(str(search_analyzed))
-        if ai_stats.get("include_standalone", False):
-            ai_parts.append(str(standalone_analyzed))
-        ai_display = " + ".join(ai_parts) if sum(int(p) for p in ai_parts) > 0 else "0"
->>>>>>> upstream/master
 
             mode_suffix = ""
             if ai_mode_val and ai_mode_val != mode:

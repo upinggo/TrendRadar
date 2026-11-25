@@ -500,6 +500,39 @@ class ReportNotificationAndAIIntegrationTests(unittest.TestCase):
             }
         ]
 
+    def test_dispatch_all_forwards_search_with_economic_analysis(self):
+        import inspect
+        from trendradar.notification.dispatcher import NotificationDispatcher
+
+        channels = (
+            ("FEISHU_WEBHOOK_URL", "feishu", "_send_feishu"),
+            ("DINGTALK_WEBHOOK_URL", "dingtalk", "_send_dingtalk"),
+            ("BARK_URL", "bark", "_send_bark"),
+            ("SLACK_WEBHOOK_URL", "slack", "_send_slack"),
+        )
+        search_items = self._sample_search_items()
+        search_new_items = self._sample_search_items()
+        economic_analysis = object()
+        for setting, channel, method in channels:
+            with self.subTest(channel=channel):
+                dispatcher = NotificationDispatcher(
+                    {setting: "https://example.invalid", "WEB_SEARCH": {"NOTIFICATION_SHOW_SNIPPET": True}},
+                    lambda: datetime(2026, 11, 25), lambda *args, **kwargs: [],
+                )
+                signature = inspect.signature(getattr(dispatcher, method))
+                with patch.object(dispatcher, method, return_value=True) as send:
+                    result = dispatcher.dispatch_all(
+                        {"stats": [], "new_titles": []}, "test",
+                        economic_analysis=economic_analysis,
+                        search_items=search_items, search_new_items=search_new_items,
+                    )
+                self.assertTrue(result[channel])
+                bound = signature.bind(*send.call_args.args, **send.call_args.kwargs)
+                self.assertIs(bound.arguments["economic_analysis"], economic_analysis)
+                self.assertIs(bound.arguments["search_items"], search_items)
+                self.assertIs(bound.arguments["search_new_items"], search_new_items)
+                self.assertTrue(bound.arguments["show_search_snippet"])
+
     def test_html_renders_three_sources_and_section_nav(self):
         from trendradar.report.html import render_html_content
 
@@ -1027,9 +1060,26 @@ class EndToEndAndCLITests(unittest.TestCase):
             self.assertTrue(all(status in ("pass", "warn") for status, _, _ in checks), checks)
 
 
-<<<<<<< HEAD
 class HtmlEmailSanitizationTests(unittest.TestCase):
     """Email sanitization must handle browser-accepted script tag variants."""
+
+    def test_parser_based_sanitizer_is_not_shadowed_by_older_definition(self):
+        from trendradar.report import html as report_html
+
+        with patch.object(report_html, "_remove_script_tags", wraps=report_html._remove_script_tags) as strip:
+            cleaned = report_html.prepare_html_for_email("<p>keep</p><script>bad()</script>")
+        strip.assert_called_once()
+        self.assertEqual(cleaned, "<p>keep</p>")
+
+    def test_unterminated_and_self_closing_scripts_are_removed(self):
+        from trendradar.report.html import prepare_html_for_email
+
+        for html in (
+            "<p>keep</p><script>bad()",
+            '<p>keep</p><script src="/tracker.js"/>',
+        ):
+            with self.subTest(html=html):
+                self.assertEqual(prepare_html_for_email(html), "<p>keep</p>")
 
     def test_strips_script_tags_with_whitespace_and_uppercase(self):
         from trendradar.report.html import prepare_html_for_email
@@ -1051,7 +1101,5 @@ class HtmlEmailSanitizationTests(unittest.TestCase):
         self.assertNotIn("</script", cleaned.lower())
 
 
-=======
->>>>>>> upstream/master
 if __name__ == "__main__":
     unittest.main()

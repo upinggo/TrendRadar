@@ -31,6 +31,8 @@ _EMAIL_TOC_RE = re.compile(
 _EMAIL_DATA_ATTR_RE = re.compile(
     r'\s+data-(?:rank-(?:timeline|source)|copy-query|ai-accent)="[^"]*"'
 )
+
+
 class _ScriptTagStripper(HTMLParser):
     """Remove script blocks with a real HTML parser.
 
@@ -122,48 +124,6 @@ def prepare_html_for_email(html_content: str) -> str:
     cleaned = _EMAIL_DATA_ATTR_RE.sub("", cleaned)
     # 兜底移除任何残留脚本标签（兼容外部传入或旧版生成的 HTML 文件）
     cleaned = _remove_script_tags(cleaned)
-    # 压缩多余连续空行，进一步减小邮件体积
-    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
-    return cleaned
-
-
-_EMAIL_STRIP_DOM_RE = re.compile(
-    r"<!--EMAIL_STRIP_START-->.*?<!--EMAIL_STRIP_END-->", re.DOTALL
-)
-_EMAIL_STRIP_CSS_RE = re.compile(
-    r"/\*EMAIL_STRIP_CSS_START\*/.*?/\*EMAIL_STRIP_CSS_END\*/", re.DOTALL
-)
-_EMAIL_TOC_RE = re.compile(
-    r"<!--EMAIL_TOC_START:(.*?):EMAIL_TOC_END-->", re.DOTALL
-)
-_EMAIL_DATA_ATTR_RE = re.compile(
-    r'\s+data-(?:rank-(?:timeline|source)|copy-query|ai-accent)="[^"]*"'
-)
-_SCRIPT_TAG_RE = re.compile(
-    r"<script\b[^>]*>.*?</script\b[^>]*>", re.DOTALL | re.IGNORECASE
-)
-
-
-def prepare_html_for_email(html_content: str) -> str:
-    """将网页版 HTML 报告净化为高兼容、轻量的邮件专用 HTML。
-
-    邮件客户端普遍剥离 JavaScript，且部分客户端会过滤 CSS 或在超过 102KB（如 Gmail）
-    时强制截断正文。该函数在不修改本地网页版 HTML 的前提下：
-    1. 移除全部 <script> 及仅浏览器可用的交互控件（导出按钮、宽屏/暗色开关、
-       搜索框、区域切换按钮栏、热榜/独立区/联网搜索 Tab 栏、悬浮工具栏、动态水印、
-       排名变化轨迹浮层数据等）；
-    2. 移除 wide-mode / dark-mode 等邮件无效 CSS，显著缩小邮件体积避免 Gmail 截断；
-    3. 释放零 JS 的纯静态锚点目录条（.email-toc），确保全部主题和分区纵向完整展开可见。
-    """
-    if not html_content:
-        return html_content
-
-    cleaned = _EMAIL_STRIP_CSS_RE.sub("", html_content)
-    cleaned = _EMAIL_STRIP_DOM_RE.sub("", cleaned)
-    cleaned = _EMAIL_TOC_RE.sub(r"\1", cleaned)
-    cleaned = _EMAIL_DATA_ATTR_RE.sub("", cleaned)
-    # 兜底移除任何残留脚本标签（兼容外部传入或旧版生成的 HTML 文件）
-    cleaned = _SCRIPT_TAG_RE.sub("", cleaned)
     # 压缩多余连续空行，进一步减小邮件体积
     cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
     return cleaned
@@ -1387,7 +1347,6 @@ def render_html_content(
                 /* 默认无边框，由 section-divider 动态添加 */
             }
 
-<<<<<<< HEAD
             /* ===== Treemap 可视化 ===== */
             .treemap-block {
                 margin: 0 0 20px 0;
@@ -1457,8 +1416,6 @@ def render_html_content(
                     display: block;
                 }
             }
-=======
->>>>>>> upstream/master
             /* 通用板块头部图标徽章与计数胶囊 */
             .section-heading-left {
                 display: inline-flex;

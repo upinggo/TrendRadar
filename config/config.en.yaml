@@ -470,11 +470,7 @@ ai_analysis:
 
   include_rss: false                # Include RSS content in analysis (true=include, false=exclude)
   include_web_search: true          # Include web search results & summaries in analysis (true=include, false=exclude)
-<<<<<<< HEAD
   search_summary_max_chars: 300     # Max summary chars per web search result sent to AI
-=======
-  search_summary_max_chars: 300     # Max summary characters per web search result sent to AI
->>>>>>> upstream/master
   include_standalone: true          # Include standalone-region data (true=include, false=exclude)
 
   include_rank_timeline: true       # Rank-timeline detail level
@@ -536,10 +532,6 @@ advanced:
     max_retries: 2                    # Max retries on rate limit or timeout
     use_proxy: false                  # Use proxy (true=on, false=off)
     proxy_url: ""                     # Web-search-specific proxy (empty → use crawler.default_proxy)
-<<<<<<< HEAD
-=======
-
->>>>>>> upstream/master
   # Sorting weights (used to re-rank hotlist items across platforms)
   # Must sum to 1
   weight:

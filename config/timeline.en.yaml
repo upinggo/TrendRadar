@@ -443,10 +443,6 @@ custom:
                                    # A period can also set this to override
                                    # e.g. the evening summary uses AI filtering:
                                    #   filter_method: "ai"
-<<<<<<< HEAD
-=======
-
->>>>>>> upstream/master
     # search: true                 # Run web search in this period (optional; follows collect if omitted)
     # search_file: "policy.txt"    # Custom web search queries file (in config/custom/search/)
     once:
