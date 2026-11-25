@@ -15,6 +15,7 @@ import requests
 from .parser import RSSParser
 from trendradar.storage.base import RSSItem, RSSData
 from trendradar.utils.time import get_configured_time, is_within_days, DEFAULT_TIMEZONE
+from trendradar.utils.diagnostics import summary, warning
 
 
 @dataclass
@@ -196,17 +197,23 @@ class RSSFetcher:
                 jitter = random.uniform(-0.2, 0.2) * interval
                 time.sleep(interval + jitter)
 
+            started = time.monotonic()
             items, error = self.fetch_feed(feed)
+            print(f"[RSS] {feed.name}: 耗时 {time.monotonic() - started:.1f}s")
 
             id_to_name[feed.id] = feed.name
 
             if error:
                 failed_ids.append(feed.id)
+                warning(f"RSS source failed: {feed.id}")
             else:
                 all_items[feed.id] = items
+                if not items:
+                    print(f"[RSS] {feed.name}: 请求成功但无条目（不是新鲜度或关键词过滤结果）")
 
         total_items = sum(len(items) for items in all_items.values())
         print(f"[RSS] 抓取完成: {len(all_items)} 个源成功, {len(failed_ids)} 个失败, 共 {total_items} 条")
+        summary(f"RSS: {len(all_items)}/{len(self.feeds)} sources fetched; {total_items} items before freshness/keyword filtering")
 
         return RSSData(
             date=crawl_date,

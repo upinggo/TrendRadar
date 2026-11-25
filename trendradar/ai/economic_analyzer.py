@@ -12,6 +12,7 @@
 """
 
 import json
+import math
 from dataclasses import dataclass, field, asdict
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -19,6 +20,7 @@ from trendradar.ai.client import AIClient
 from trendradar.ai.economic_data import EconomicSnapshot, snapshot_to_prompt_text
 from trendradar.ai.economic_snapshot_store import deltas_to_prompt_text
 from trendradar.ai.prompt_loader import load_prompt_template
+from trendradar.utils.diagnostics import safe_error
 
 
 # 必须与 economic_analysis_prompt.txt 中的资产清单严格一致
@@ -59,6 +61,21 @@ class EconomicAnalysisResult:
     validation_warnings: List[str] = field(default_factory=list)
     # 原始行情快照（LLM 失败时仍可用作回退展示的兜底数据）
     snapshot_data: Dict[str, Any] = field(default_factory=dict)
+
+    def has_valid_allocations(self) -> bool:
+        """Also reject legacy caches that incorrectly recorded missing profiles as success."""
+        if not isinstance(self.allocations, dict) or set(self.allocations) != set(PROFILES):
+            return False
+        for weights in self.allocations.values():
+            if not isinstance(weights, dict) or not weights:
+                return False
+            if any(asset not in ASSET_WHITELIST for asset in weights):
+                return False
+            if any(type(weight) is not int or weight < 0 for weight in weights.values()):
+                return False
+            if sum(weights.values()) != 100:
+                return False
+        return True
 
 
 class EconomicAnalyzer:
@@ -141,27 +158,29 @@ class EconomicAnalyzer:
             response = self.client.chat(messages)
             parsed = self._parse_response(response)
 
-            # JSON 解析失败时重试一次
-            if parsed is None:
-                print("[Economic] JSON 解析失败，尝试让 AI 修复...")
+            # Syntax and semantic failures share one bounded repair attempt.
+            validation_error = self._validate_payload(parsed)
+            if validation_error:
+                print("[Economic] 输出校验失败，尝试修复一次...")
                 fix_response = self._retry_fix_json(response)
                 if fix_response:
-                    parsed = self._parse_response(fix_response)
+                    response = fix_response
+                    parsed = self._parse_response(response)
+                validation_error = self._validate_payload(parsed)
 
-            if parsed is None:
-                result.error = "AI 返回的 JSON 无法解析"
-                result.raw_response = response
+            result.raw_response = response
+            if validation_error:
+                result.error = validation_error
                 return result
 
             self._populate(result, parsed)
-            result.raw_response = response
-            result.success = True
+            result.success = result.has_valid_allocations()
+            if not result.success:
+                result.error = "资产配置归一化后无效"
             return result
 
         except Exception as e:
-            error_type = type(e).__name__
-            error_msg = str(e)[:200]
-            result.error = f"经济分析失败 ({error_type}): {error_msg}"
+            result.error = f"经济分析失败: {safe_error(e)}"
             return result
 
     # ---- 内部方法 ----------------------------------------------------------
@@ -198,8 +217,10 @@ class EconomicAnalyzer:
             {
                 "role": "system",
                 "content": (
-                    "你是 JSON 修复助手。下面是格式有误的 JSON，请只输出修复后的纯 JSON，"
-                    "不要 markdown 代码块或说明文字。"
+                    "修复经济分析 JSON，只输出纯 JSON。必须包含非空字符串 global_trends、china_trends，"
+                    "以及 allocations 对象，内含 conservative、balanced、aggressive 三个对象。"
+                    "每档仅使用以下资产，权重必须是有限非负数且合计 100："
+                    + "、".join(ASSET_WHITELIST)
                 ),
             },
             {"role": "user", "content": original},
@@ -207,7 +228,7 @@ class EconomicAnalyzer:
         try:
             return self.client.chat(messages)
         except Exception as e:
-            print(f"[Economic] JSON 修复失败: {type(e).__name__}: {e}")
+            print(f"[Economic] JSON 修复失败: {safe_error(e)}")
             return None
 
     def _parse_response(self, response: str) -> Optional[Dict[str, Any]]:
@@ -225,7 +246,8 @@ class EconomicAnalyzer:
         text = text.strip()
 
         try:
-            return json.loads(text)
+            parsed = json.loads(text)
+            return parsed if isinstance(parsed, dict) else None
         except json.JSONDecodeError:
             try:
                 from json_repair import repair_json
@@ -235,6 +257,34 @@ class EconomicAnalyzer:
             except Exception:
                 return None
         return None
+
+    @staticmethod
+    def _validate_payload(data: Optional[Dict[str, Any]]) -> str:
+        if not isinstance(data, dict):
+            return "AI 返回的 JSON 必须是对象"
+        for field_name in ("global_trends", "china_trends"):
+            if not isinstance(data.get(field_name), str) or not data[field_name].strip():
+                return f"经济分析缺少 {field_name}"
+        allocations = data.get("allocations")
+        if not isinstance(allocations, dict) or set(allocations) != set(PROFILES):
+            return "资产配置必须包含 conservative、balanced、aggressive 三档"
+        for profile, weights in allocations.items():
+            if not isinstance(weights, dict) or not weights:
+                return f"资产配置 {profile} 为空或不是对象"
+            total = 0.0
+            for asset, value in weights.items():
+                if asset not in ASSET_WHITELIST or isinstance(value, bool):
+                    return f"资产配置 {profile} 包含非法资产或权重"
+                try:
+                    weight = float(value)
+                except (ValueError, TypeError, OverflowError):
+                    return f"资产配置 {profile} 包含无效权重"
+                if not math.isfinite(weight) or weight < 0:
+                    return f"资产配置 {profile} 包含非有限或负权重"
+                total += weight
+            if not math.isfinite(total) or abs(total - 100) > NORMALIZE_TOLERANCE:
+                return f"资产配置 {profile} 总和超出 100±{NORMALIZE_TOLERANCE} 容差"
+        return ""
 
     def _populate(self, result: EconomicAnalysisResult, data: Dict[str, Any]) -> None:
         result.global_trends = str(data.get("global_trends", "")).strip()
@@ -290,7 +340,7 @@ class EconomicAnalyzer:
                 continue
             try:
                 w = int(round(float(weight)))
-            except (ValueError, TypeError):
+            except (ValueError, TypeError, OverflowError):
                 warnings.append(f"[{profile}] {asset} 权重无效: {weight!r}")
                 continue
             if w < 0:
