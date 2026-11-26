@@ -220,6 +220,7 @@ Pair Windows and macOS computers once to reconnect automatically on your local n
 - **Modern Minimalist HTML Report & Rank Timeline Popover**: Redesigned every section into crisp neutral cards with unified outline SVG icons (zero emojis); hover or click any hotlist rank pill to view an inverted-Y rank-change sparkline chart and timestamp breakdown (including off-list gaps); added glassmorphic header metric tooltips, click-to-jump navigation, and a frosted floating dock with reading-progress ring and clickable shortcuts panel
 - **Email-Safe HTML Sanitization**: Automatically strips scripts, dead buttons, and interactive overlays before emailing (reducing email size by ~70%+ to stay safely below Gmail's 102KB clipping limit) while expanding every topic and section vertically
 
+<<<<<<< HEAD
 
 ### 2026/07/08 - Fork enhancement
 
@@ -236,6 +237,8 @@ Pair Windows and macOS computers once to reconnect automatically on your local n
 - **Trending keyword treemap across all platforms**: New `extract_trending_ngrams` extracts 2–4 char hot n-grams from all raw titles, rank-weighted per platform, with Chinese stopwords and same-headline-fragment / sliding-window substring de-duplication — no user keyword list required
 - **Squarified treemap layout**: In-house `_squarify` (Bruls et al.) produces rectangles with more balanced aspect ratios, adaptive font sizing / truncation, and auto-hidden text on tiny tiles
 
+=======
+>>>>>>> upstream/master
 ### 2026/11/21 - mcp-v4.2.0
 
 - **4 New Web Search MCP Tools**: AI clients can query saved web search results (`get_latest_web_search`), search historical web findings (`search_web_history`), check web search status (`get_web_search_status`), and run on-demand live searches (`live_web_search`)

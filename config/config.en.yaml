@@ -141,7 +141,10 @@ rss:
     - id: "yahoo-finance"
       name: "Yahoo Finance"
       url: "https://finance.yahoo.com/news/rssindex"
+<<<<<<< HEAD
       enabled: false                  # Returned 404; verify a valid feed before re-enabling.
+=======
+>>>>>>> upstream/master
 
     # Custom feed example
     # - id: "custom-feed"
@@ -470,7 +473,11 @@ ai_analysis:
 
   include_rss: false                # Include RSS content in analysis (true=include, false=exclude)
   include_web_search: true          # Include web search results & summaries in analysis (true=include, false=exclude)
+<<<<<<< HEAD
   search_summary_max_chars: 300     # Max summary chars per web search result sent to AI
+=======
+  search_summary_max_chars: 300     # Max summary characters per web search result sent to AI
+>>>>>>> upstream/master
   include_standalone: true          # Include standalone-region data (true=include, false=exclude)
 
   include_rank_timeline: true       # Rank-timeline detail level
@@ -490,7 +497,11 @@ ai_translation:
   language: "English"               # Target language (e.g. "English", "Chinese", "Korean")
   prompt_file: "ai_translation_prompt.txt"   # Prompt file (relative to the config directory)
 
+<<<<<<< HEAD
   batch_size: 40                    # Smaller batches reduce truncation; successful translations reused within each run
+=======
+  batch_size: 100                   # Titles sent to the AI per batch; auto-batched beyond this
+>>>>>>> upstream/master
   batch_interval: 2                 # Batch interval (seconds) to avoid API rate limits; 0=no wait
 
   # Translation scope (regions turned off in display.regions are never translated even if enabled here)
@@ -532,6 +543,10 @@ advanced:
     max_retries: 2                    # Max retries on rate limit or timeout
     use_proxy: false                  # Use proxy (true=on, false=off)
     proxy_url: ""                     # Web-search-specific proxy (empty → use crawler.default_proxy)
+<<<<<<< HEAD
+=======
+
+>>>>>>> upstream/master
   # Sorting weights (used to re-rank hotlist items across platforms)
   # Must sum to 1
   weight:

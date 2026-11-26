@@ -300,16 +300,27 @@ display:
     - web_search                          # 4️⃣ 联网搜索区域（按提示词主动搜全网）
     - standalone                          # 5️⃣ 独立展示区
     - ai_analysis                         # 6️⃣ AI 分析区域
+<<<<<<< HEAD
     - economic_analysis                   # 7️⃣ 经济分析与资产配置（每天首次推送生成并缓存）
+=======
+>>>>>>> upstream/master
 
   # 推送区域开关（需配合上方 region_order 使用）
   regions:
     hotlist: true                     # 热榜区域：关键词匹配 / AI 智能筛选（true=显示, false=隐藏）
+<<<<<<< HEAD
     new_items: true                   # 新增热点区域：含热榜新增 + RSS 新增 + 联网搜索新增（true=显示, false=隐藏）
+=======
+    new_items: false                  # 新增热点区域：含热榜新增 + RSS 新增 + 联网搜索新增（true=显示, false=隐藏）
+>>>>>>> upstream/master
                                       # 注：热点词汇统计中的新增标记🆕不受此配置影响
     rss: true                         # RSS 订阅区域（true=显示并分析, false=隐藏并跳过分析）
     web_search: true                  # 联网搜索区域（true=显示, false=隐藏）
+<<<<<<< HEAD
     standalone: true                  # 独立展示区：完整热榜/RSS，不受关键词过滤（true=显示, false=隐藏）
+=======
+    standalone: false                 # 独立展示区：完整热榜/RSS，不受关键词过滤（true=显示, false=隐藏）
+>>>>>>> upstream/master
     ai_analysis: true                 # AI 分析区域（true=显示, false=隐藏）
     economic_analysis: true           # 经济分析区域（true=显示, false=隐藏；需 economic_analysis.enabled；每天首次推送调用 LLM 并缓存）
 
