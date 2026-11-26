@@ -500,6 +500,7 @@ class ReportNotificationAndAIIntegrationTests(unittest.TestCase):
             }
         ]
 
+<<<<<<< HEAD
     def test_dispatch_all_forwards_search_with_economic_analysis(self):
         import inspect
         from trendradar.notification.dispatcher import NotificationDispatcher
@@ -533,6 +534,8 @@ class ReportNotificationAndAIIntegrationTests(unittest.TestCase):
                 self.assertIs(bound.arguments["search_new_items"], search_new_items)
                 self.assertTrue(bound.arguments["show_search_snippet"])
 
+=======
+>>>>>>> upstream/master
     def test_html_renders_three_sources_and_section_nav(self):
         from trendradar.report.html import render_html_content
 
@@ -1060,6 +1063,7 @@ class EndToEndAndCLITests(unittest.TestCase):
             self.assertTrue(all(status in ("pass", "warn") for status, _, _ in checks), checks)
 
 
+<<<<<<< HEAD
 class HtmlEmailSanitizationTests(unittest.TestCase):
     """Email sanitization must handle browser-accepted script tag variants."""
 
@@ -1101,5 +1105,7 @@ class HtmlEmailSanitizationTests(unittest.TestCase):
         self.assertNotIn("</script", cleaned.lower())
 
 
+=======
+>>>>>>> upstream/master
 if __name__ == "__main__":
     unittest.main()

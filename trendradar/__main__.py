@@ -20,7 +20,10 @@ from trendradar.core.analyzer import convert_keyword_stats_to_platform_stats
 from trendradar.crawler import DataFetcher
 from trendradar.storage import convert_crawl_results_to_news_data
 from trendradar.utils.time import DEFAULT_TIMEZONE, is_within_days, calculate_days_old, format_iso_time_friendly
+<<<<<<< HEAD
 from trendradar.utils.diagnostics import summary, warning
+=======
+>>>>>>> upstream/master
 from trendradar.ai import AIAnalyzer, AIAnalysisResult
 from trendradar.ai.economic_analyzer import EconomicAnalyzer, EconomicAnalysisResult
 from trendradar.ai.economic_data import EconomicDataFetcher
@@ -324,7 +327,10 @@ class NewsAnalyzer:
         current_results: Optional[Dict] = None,
         schedule: ResolvedSchedule = None,
         standalone_data: Optional[Dict] = None,
+<<<<<<< HEAD
         economic_analysis: Optional[EconomicAnalysisResult] = None,
+=======
+>>>>>>> upstream/master
         search_items: Optional[List[Dict]] = None,
     ) -> Optional[AIAnalysisResult]:
         """执行 AI 分析"""
@@ -812,7 +818,11 @@ class NewsAnalyzer:
         standalone_data: Optional[Dict] = None,
         schedule: ResolvedSchedule = None,
         rss_new_urls: Optional[set] = None,
+<<<<<<< HEAD
     ) -> Tuple[List[Dict], Optional[str], Optional[AIAnalysisResult], Optional[List[Dict]], Optional[Dict], Optional[List[Dict]], Optional[EconomicAnalysisResult], Optional[List[Dict]], Optional[List[Dict]]]:
+=======
+    ) -> Tuple[List[Dict], Optional[str], Optional[AIAnalysisResult], Optional[List[Dict]], Optional[Dict], Optional[List[Dict]], Optional[List[Dict]], Optional[List[Dict]]]:
+>>>>>>> upstream/master
         """统一的分析流水线：数据处理 → 统计计算（关键词/AI筛选）→ AI分析 → HTML生成"""
 
         # 根据筛选策略选择数据处理方式
@@ -863,10 +873,13 @@ class NewsAnalyzer:
                 self.ctx.rank_threshold,
             )
 
+<<<<<<< HEAD
         # 经济分析与资产配置（每天首次运行调用 LLM 并缓存，当日后续推送复用）
         # 先于 AI 分析执行，把行情快照与宏观研判注入 AI 分析的 macro_conclusion 板块
         economic_result = self._run_economic_analysis(stats)
 
+=======
+>>>>>>> upstream/master
         # AI 分析（如果启用，用于 HTML 报告；支持纯 RSS/纯联网搜索模式）
         ai_result = None
         ai_config = self.ctx.config.get("AI_ANALYSIS", {})
@@ -884,7 +897,10 @@ class NewsAnalyzer:
                 stats, rss_items, mode, report_type, id_to_name,
                 current_results=data_source, schedule=schedule,
                 standalone_data=standalone_data,
+<<<<<<< HEAD
                 economic_analysis=economic_result,
+=======
+>>>>>>> upstream/master
                 search_items=search_items,
             )
 
@@ -929,7 +945,10 @@ class NewsAnalyzer:
             display_regions = self.ctx.config.get("DISPLAY", {}).get("REGIONS", {})
             html_standalone = standalone_data if display_regions.get("STANDALONE", False) else None
             html_ai = ai_result if display_regions.get("AI_ANALYSIS", True) else None
+<<<<<<< HEAD
             html_econ = economic_result if display_regions.get("ECONOMIC_ANALYSIS", True) else None
+=======
+>>>>>>> upstream/master
             html_search = search_items if display_regions.get("WEB_SEARCH", True) else None
             html_search_new = search_new_items if (display_regions.get("WEB_SEARCH", True) and display_regions.get("NEW_ITEMS", True)) else None
             html_file = self.ctx.generate_html(
@@ -965,7 +984,11 @@ class NewsAnalyzer:
                 raw_results=data_source,
             )
 
+<<<<<<< HEAD
         return stats, html_file, ai_result, rss_items, standalone_data, rss_new_items, economic_result, search_items, search_new_items
+=======
+        return stats, html_file, ai_result, rss_items, standalone_data, rss_new_items, search_items, search_new_items
+>>>>>>> upstream/master
 
     def _send_notification_if_needed(
         self,
@@ -986,7 +1009,11 @@ class NewsAnalyzer:
         schedule: ResolvedSchedule = None,
         economic_result: Any = None,
     ) -> bool:
+<<<<<<< HEAD
         """统一的通知发送逻辑，包含所有判断条件，支持热榜+RSS+联网搜索+经济分析合并推送+AI分析+独立展示区"""
+=======
+        """统一的通知发送逻辑，包含所有判断条件，支持热榜+RSS+联网搜索合并推送+AI分析+独立展示区"""
+>>>>>>> upstream/master
         has_notification = self._has_notification_configured()
         cfg = self.ctx.config
 
@@ -1040,7 +1067,10 @@ class NewsAnalyzer:
                         current_results=current_results, schedule=schedule,
                         standalone_data=standalone_data,
                         search_items=search_items,
+<<<<<<< HEAD
                         economic_analysis=economic_result,
+=======
+>>>>>>> upstream/master
                     )
 
             # 准备报告数据
@@ -1916,7 +1946,11 @@ class NewsAnalyzer:
                     all_results, historical_id_to_name, historical_title_info, raw_rss_items
                 )
 
+<<<<<<< HEAD
                 stats, html_file, ai_result, rss_items, standalone_data, rss_new_items, economic_result, search_items, search_new_items = self._run_analysis_pipeline(
+=======
+                stats, html_file, ai_result, rss_items, standalone_data, rss_new_items, search_items, search_new_items = self._run_analysis_pipeline(
+>>>>>>> upstream/master
                     all_results,
                     self.report_mode,
                     historical_title_info,
@@ -1947,7 +1981,11 @@ class NewsAnalyzer:
                 # 仅启用了 RSS / 联网搜索，无热榜数据
                 title_info = {}
                 standalone_data = self._prepare_standalone_data({}, {}, {}, raw_rss_items)
+<<<<<<< HEAD
                 stats, html_file, ai_result, rss_items, standalone_data, rss_new_items, economic_result, search_items, search_new_items = self._run_analysis_pipeline(
+=======
+                stats, html_file, ai_result, rss_items, standalone_data, rss_new_items, search_items, search_new_items = self._run_analysis_pipeline(
+>>>>>>> upstream/master
                     {},
                     self.report_mode,
                     title_info,
@@ -1984,7 +2022,11 @@ class NewsAnalyzer:
                     all_results, historical_id_to_name, historical_title_info, raw_rss_items
                 )
 
+<<<<<<< HEAD
                 stats, html_file, ai_result, rss_items, standalone_data, rss_new_items, economic_result, search_items, search_new_items = self._run_analysis_pipeline(
+=======
+                stats, html_file, ai_result, rss_items, standalone_data, rss_new_items, search_items, search_new_items = self._run_analysis_pipeline(
+>>>>>>> upstream/master
                     all_results,
                     self.report_mode,
                     historical_title_info,
@@ -2014,7 +2056,11 @@ class NewsAnalyzer:
                 standalone_data = self._prepare_standalone_data(
                     results, id_to_name, title_info, raw_rss_items
                 )
+<<<<<<< HEAD
                 stats, html_file, ai_result, rss_items, standalone_data, rss_new_items, economic_result, search_items, search_new_items = self._run_analysis_pipeline(
+=======
+                stats, html_file, ai_result, rss_items, standalone_data, rss_new_items, search_items, search_new_items = self._run_analysis_pipeline(
+>>>>>>> upstream/master
                     results,
                     self.report_mode,
                     title_info,
@@ -2038,7 +2084,11 @@ class NewsAnalyzer:
             standalone_data = self._prepare_standalone_data(
                 results, id_to_name, title_info, raw_rss_items
             )
+<<<<<<< HEAD
             stats, html_file, ai_result, rss_items, standalone_data, rss_new_items, economic_result, search_items, search_new_items = self._run_analysis_pipeline(
+=======
+            stats, html_file, ai_result, rss_items, standalone_data, rss_new_items, search_items, search_new_items = self._run_analysis_pipeline(
+>>>>>>> upstream/master
                 results,
                 self.report_mode,
                 title_info,

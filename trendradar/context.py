@@ -358,7 +358,10 @@ class AppContext:
                 search_items=search_items,
                 search_new_items=search_new_items,
                 ai_analysis=ai_analysis,
+<<<<<<< HEAD
                 economic_analysis=economic_analysis,
+=======
+>>>>>>> upstream/master
                 standalone_data=standalone_data,
                 **kwargs,
             ),
@@ -454,6 +457,7 @@ class AppContext:
         report_type: str = "热点分析报告",
         compact: bool = False,
     ) -> List[str]:
+<<<<<<< HEAD
         """分批处理消息内容（支持热榜+RSS+联网搜索+经济分析合并推送+AI分析+独立展示区）
 
         Args:
@@ -474,6 +478,9 @@ class AppContext:
         Returns:
             分批后的消息内容列表
         """
+=======
+        """分批处理消息内容（支持热榜+RSS+联网搜索合并+AI分析+独立展示区）"""
+>>>>>>> upstream/master
         if show_search_snippet is None:
             show_search_snippet = bool(
                 self.web_search_config.get("NOTIFICATION_SHOW_SNIPPET", False)
